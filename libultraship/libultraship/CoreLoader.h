@@ -1,22 +1,35 @@
 ﻿#pragma once
 #include "ModModule.h"
+#include "GameVersions.h"
+
+#define OOT_ANY_VERSION 0xFFFFFFFF
+
+enum ModVersion {
+	UNK, VERSION_B0
+};
 
 struct ModMetadata {
-	const char* name;
-	const char* author;
-	const char* version;
+	int mod_version;
+	uint32_t game_version;
+	ModVersion int_version;
+	std::string main;
+	std::string dll;
+	std::string name;
+	std::string author;
+	std::string description;
 };
 
 struct ModHandle {
-	ModMetadata* metadata;
+	ModMetadata metadata;
 	void* handle;
 };
 
-typedef ModMetadata* (*Ship_Init)();
+typedef const ModMetadata (*Barrel_MData)();
+typedef void  (*Ship_Init)();
 typedef void* (*BindFunction)(void* ref);
 typedef void* (*DumpFunction)();
 
-#define SHIP_MAIN_FUNC extern "C" __declspec(dllexport) ModMetadata* MainFunc
+#define EXPORT_FUNC extern "C" __declspec(dllexport)
 
 namespace Ship {
 	class CoreLoader : public ModModule {

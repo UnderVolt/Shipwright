@@ -1,0 +1,8 @@
+{
+    "main": "Demo_Init",
+    "name": "Mario_Shield",
+    "description": "Hylian shield replacement",
+    "author": "Lywx & MelonSpeedruns",
+    "version:": 1,
+    "dll": "MarioShield"
+}

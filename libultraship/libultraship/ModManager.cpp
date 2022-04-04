@@ -1,7 +1,6 @@
 #include "ModManager.h"
 
 #include "CoreLoader.h"
-#include "TextureMod.h"
 #include "ModModule.h"
 #include "SohImGuiImpl.h"
 

@@ -15,17 +15,9 @@ void BindGameHooks() {
     }});
 }
 
-SHIP_MAIN_FUNC() {
-
+EXPORT_FUNC void Demo_Init() {
     BindGameHooks();
-
     INFO("Ship Mod loaded");
-
-    return new ModMetadata{
-        "Mario Shield",
-        "Lywx & MelonSpeedruns",
-        "v0.1"
-    };
 }
 
 // Predefined functions - don't modify it

@@ -88,6 +88,9 @@
     <Filter Include="Source Files\Logging">
       <UniqueIdentifier>{bd6557f1-9480-413b-b0cd-843f8efc1939}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Lib\nlohmann">
+      <UniqueIdentifier>{1fa18471-3689-48cd-926b-5c1cdec26d90}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Factories\MaterialFactory.cpp">
@@ -634,6 +637,9 @@
     </ClInclude>
     <ClInclude Include="CoreLoader.h">
       <Filter>Source Files\ModManager\ModModule</Filter>
+    </ClInclude>
+    <ClInclude Include="Lib\nlohmann\json.hpp">
+      <Filter>Source Files\Lib\nlohmann</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
