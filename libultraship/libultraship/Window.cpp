@@ -109,11 +109,26 @@ extern "C" {
             }
         }
 
-        ModInternal::bindHook(CONTROLLER_READ);
-        ModInternal::initBindHook(1,
+        Ship::bindHook(CONTROLLER_READ);
+        Ship::triggerHook(1,
             HookParameter({ .name = "cont_pad", .parameter = (void*)pad })
         );
-        ModInternal::callBindHook(0);
+    }
+
+    extern "C" int ResourceMgr_OTRSigCheck(char* imgData)
+    {
+        uintptr_t i = (uintptr_t)(imgData);
+
+        if (i == 0xD9000000 || i == 0xE7000000 || (i & 0xF0000000) == 0xF0000000)
+            return 0;
+
+        if ((i & 0xFF000000) != 0xAB000000 && (i & 0xFF000000) != 0xCD000000 && i != 0) {
+            if (imgData[0] == '_' && imgData[1] == '_' && imgData[2] == 'O' && imgData[3] == 'T' && imgData[4] == 'R' &&
+                imgData[5] == '_' && imgData[6] == '_')
+                return 1;
+        }
+
+        return 0;
     }
 
     char* ResourceMgr_GetNameByCRC(uint64_t crc, char* alloc) {
@@ -166,12 +181,11 @@ extern "C" {
         if (!hashStr.empty())  {
             const auto res = static_cast<Ship::Texture*>(Ship::GlobalCtx2::GetInstance()->GetResourceManager()->LoadResource(hashStr).get());
 
-            ModInternal::bindHook(LOAD_TEXTURE);
-            ModInternal::initBindHook(2,
+            Ship::bindHook(LOAD_TEXTURE);
+            Ship::triggerHook(2,
                 HookParameter({.name = "path", .parameter = (void*)hashStr.c_str() }),
                 HookParameter({.name = "texture", .parameter = static_cast<void*>(&res->imageData) })
             );
-            ModInternal::callBindHook(0);
 
             return reinterpret_cast<char*>(res->imageData);
         } else {
@@ -198,12 +212,11 @@ extern "C" {
 
     char* ResourceMgr_LoadTexByName(char* texPath) {
         const auto res = static_cast<Ship::Texture*>(Ship::GlobalCtx2::GetInstance()->GetResourceManager()->LoadResource(texPath).get());
-        ModInternal::bindHook(LOAD_TEXTURE);
-        ModInternal::initBindHook(2,
+        Ship::bindHook(LOAD_TEXTURE);
+        Ship::triggerHook(2,
             HookParameter({ .name = "path", .parameter = (void*)texPath }),
             HookParameter({ .name = "texture", .parameter = static_cast<void*>(&res->imageData) })
         );
-        ModInternal::callBindHook(0);
         return (char*)res->imageData;
     }
 

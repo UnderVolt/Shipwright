@@ -149,7 +149,7 @@
     <ClCompile>
       <WarningLevel>Level2</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>SPDLOG_ACTIVE_LEVEL=0;WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;ENABLE_OPENGL;ENABLE_DX11;%(PreprocessorDefinitions)GLEW_STATIC </PreprocessorDefinitions>
+      <PreprocessorDefinitions>SPDLOG_ACTIVE_LEVEL=0;WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;ENABLE_OPENGL;ENABLE_DX11;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -254,6 +254,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Blob.cpp" />
+    <ClCompile Include="CoreLoader.cpp" />
     <ClCompile Include="Cvar.cpp" />
     <ClCompile Include="Environment.cpp" />
     <ClCompile Include="GameSettings.cpp" />
@@ -341,6 +342,7 @@
     <ClInclude Include="abi.h" />
     <ClInclude Include="AudioPlayer.h" />
     <ClInclude Include="Blob.h" />
+    <ClInclude Include="CoreLoader.h" />
     <ClInclude Include="Cvar.h" />
     <ClInclude Include="Environment.h" />
     <ClInclude Include="GameSettings.h" />

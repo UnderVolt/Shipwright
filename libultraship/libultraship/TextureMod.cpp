@@ -16,10 +16,6 @@ namespace fs = std::filesystem;
 
 namespace Ship {
 	void TextureModule::Init() {
-		BIND_HOOK(LOOKUP_TEXTURE, Hook_LookupTexture);
-		BIND_HOOK(GRAYOUT_TEXTURE, Hook_GrayScaleFilter);
-		BIND_HOOK(INVALIDATE_TEXTURE, Hook_InvalidateTexture);
-
 		SohImGui::BindCmd("reload", { .handler = [&](const std::vector<std::string>&) {
 			INFO("Reloading all textures!");
 			gfx_texture_cache_clear();
@@ -39,6 +35,7 @@ namespace Ship {
 	}
 
 	void TextureModule::Hook_LookupTexture(HookEvent call) {
+	#if 0
 		const auto raw_path = BIND_PTR("path", char*);
 		if (raw_path == nullptr) return;
 
@@ -105,6 +102,7 @@ namespace Ship {
 
 		stbi_image_free(img_data);
 		call->cancelled = true;
+	#endif
 	}
 
 

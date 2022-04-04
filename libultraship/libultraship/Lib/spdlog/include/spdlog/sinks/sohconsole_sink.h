@@ -45,7 +45,7 @@ protected:
         }
         formatted.push_back('\0');
         const char *msg_output = formatted.data();
-        if (Game::Settings.debug.soh_sink && SohImGui::console->opened) 
+        if (Ship::Settings.debug.soh_sink && SohImGui::console->opened) 
             SohImGui::console->Append("SoH Logging", priority, msg_output);
     }
 

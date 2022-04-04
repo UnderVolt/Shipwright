@@ -1,6 +1,13 @@
 ﻿#pragma once
 
+#include <string>
+
 struct SoHConfigType {
+
+    struct {
+        std::string mods_directory;
+    } main;
+
     // Debug
     struct {
         bool soh = false;
@@ -58,13 +65,14 @@ enum SeqPlayers {
     /* 4 */ SEQ_MAX
  };
 
+#define MAIN_SECTION "ARCHIVE"
 #define DEBUG_SECTION "DEBUG SETTINGS"
 #define AUDIO_SECTION "AUDIO SETTINGS"
 #define CONTROLLER_SECTION "CONTROLLER SECTION"
 #define ENHANCEMENTS_SECTION "ENHANCEMENT SETTINGS"
 #define CHEATS_SECTION "CHEATS SETTINGS"
 
-namespace Game {
+namespace Ship {
     extern SoHConfigType Settings;
     void InitSettings();
     void LoadSettings();

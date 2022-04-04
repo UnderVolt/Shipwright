@@ -183,28 +183,28 @@ namespace Ship {
 
             const char* contName = SDL_GameControllerName(Cont);
             const int isSpecialController = !strcmp("PS5 Controller", contName);
-            const float gyroSensitivity = Game::Settings.controller.gyro_sensitivity;
+            const float gyroSensitivity = Settings.controller.gyro_sensitivity;
 
-            if (Game::Settings.controller.gyroDriftX == 0) {
-                Game::Settings.controller.gyroDriftX = gyroData[0];
+            if (Settings.controller.gyroDriftX == 0) {
+                Settings.controller.gyroDriftX = gyroData[0];
             }
 
-            if (Game::Settings.controller.gyroDriftY == 0) {
+            if (Settings.controller.gyroDriftY == 0) {
                 if (isSpecialController == 1) {
-                    Game::Settings.controller.gyroDriftY = gyroData[2];
+                    Settings.controller.gyroDriftY = gyroData[2];
                 }
                 else {
-                    Game::Settings.controller.gyroDriftY = gyroData[1];
+                    Settings.controller.gyroDriftY = gyroData[1];
                 }
             }
 
             if (isSpecialController == 1) {
-                wGyroX = gyroData[0] - Game::Settings.controller.gyroDriftX;
-                wGyroY = -gyroData[2] - Game::Settings.controller.gyroDriftY;
+                wGyroX = gyroData[0] - Settings.controller.gyroDriftX;
+                wGyroY = -gyroData[2] - Settings.controller.gyroDriftY;
             }
             else {
-                wGyroX = gyroData[0] - Game::Settings.controller.gyroDriftX;
-                wGyroY = gyroData[1] - Game::Settings.controller.gyroDriftY;
+                wGyroX = gyroData[0] - Settings.controller.gyroDriftX;
+                wGyroY = gyroData[1] - Settings.controller.gyroDriftY;
             }
 
             wGyroX *= gyroSensitivity;
@@ -331,7 +331,7 @@ namespace Ship {
     {
         if (SDL_GameControllerHasRumble(Cont)) {
             if (controller->rumble > 0) {
-                SDL_GameControllerRumble(Cont, 0xFFFF * Game::Settings.controller.rumble_strength, 0xFFFF * Game::Settings.controller.rumble_strength, 1);
+                SDL_GameControllerRumble(Cont, 0xFFFF * Settings.controller.rumble_strength, 0xFFFF * Settings.controller.rumble_strength, 1);
             }
         }
 

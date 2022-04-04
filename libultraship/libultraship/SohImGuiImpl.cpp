@@ -139,7 +139,7 @@ namespace SohImGui {
             return;
         }
 
-        if (d == Dialogues::dConsole && Game::Settings.debug.menu_bar) {
+        if (d == Dialogues::dConsole && Ship::Settings.debug.menu_bar) {
             return;
         }
         if (!GlobalCtx2::GetInstance()->GetWindow()->IsFullscreen()) {
@@ -175,7 +175,7 @@ namespace SohImGui {
 
     void Init(WindowImpl window_impl) {
         impl = window_impl;
-        Game::LoadSettings();
+        Ship::LoadSettings();
         ImGuiContext* ctx = ImGui::CreateContext();
         ImGui::SetCurrentContext(ctx);
         io = &ImGui::GetIO();
@@ -187,10 +187,10 @@ namespace SohImGui {
         ImGuiWMInit();
         ImGuiBackendInit();
 
-        ModInternal::registerHookListener({ GFX_INIT, [](const HookEvent ev) {
+        Ship::registerHookListener({ GFX_INIT, [](const HookEvent ev) {
 
             if (GlobalCtx2::GetInstance()->GetWindow()->IsFullscreen())
-                ShowCursor(Game::Settings.debug.menu_bar, Dialogues::dLoadSettings);
+                ShowCursor(Ship::Settings.debug.menu_bar, Dialogues::dLoadSettings);
 
             LoadTexture("Game_Icon", "assets/ship_of_harkinian/icons/gSohIcon.png");
             LoadTexture("A-Btn", "assets/ship_of_harkinian/buttons/ABtn.png");
@@ -205,15 +205,15 @@ namespace SohImGui {
             LoadTexture("C-Down", "assets/ship_of_harkinian/buttons/CDown.png");
         } });
 
-        ModInternal::registerHookListener({ CONTROLLER_READ, [](const HookEvent ev) {
-            pads = static_cast<OSContPad*>(ev->baseArgs["cont_pad"]);
+        Ship::registerHookListener({ CONTROLLER_READ, [](const HookEvent ev) {
+            pads = static_cast<OSContPad*>(ev->getArgument("cont_pad"));
         } });
-        Game::InitSettings();
+        Ship::InitSettings();
     }
 
     void Update(EventImpl event) {
         if (needs_save) {
-            Game::SaveSettings();
+            Ship::SaveSettings();
             needs_save = false;
         }
         ImGuiProcessEvent(event);
@@ -227,7 +227,7 @@ namespace SohImGui {
             const float volume = floorf(*(value) * 100) / 100;
             CVar_SetFloat(const_cast<char*>(key), volume);
             needs_save = true;
-            Game::SetSeqPlayerVolume(playerId, volume);
+            Ship::SetSeqPlayerVolume(playerId, volume);
         }
     }
 
@@ -245,7 +245,7 @@ namespace SohImGui {
         if (UseViewports()) {
             window_flags |= ImGuiWindowFlags_NoBackground;
         }
-        if (Game::Settings.debug.menu_bar) window_flags |= ImGuiWindowFlags_MenuBar;
+        if (Ship::Settings.debug.menu_bar) window_flags |= ImGuiWindowFlags_MenuBar;
 
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -269,10 +269,10 @@ namespace SohImGui {
         ImGui::DockSpace(dockId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 
         if (ImGui::IsKeyPressed(TOGGLE_BTN)) {
-            Game::Settings.debug.menu_bar = !Game::Settings.debug.menu_bar;
+            Ship::Settings.debug.menu_bar = !Ship::Settings.debug.menu_bar;
             needs_save = true;
-            GlobalCtx2::GetInstance()->GetWindow()->dwMenubar = Game::Settings.debug.menu_bar;
-            ShowCursor(Game::Settings.debug.menu_bar, Dialogues::dMenubar);
+            GlobalCtx2::GetInstance()->GetWindow()->dwMenubar = Ship::Settings.debug.menu_bar;
+            ShowCursor(Ship::Settings.debug.menu_bar, Dialogues::dMenubar);
         }
 
         if (ImGui::BeginMenuBar()) {
@@ -286,45 +286,45 @@ namespace SohImGui {
             ImGui::Separator();
 
             if (ImGui::BeginMenu("Audio")) {
-                const float volume = Game::Settings.audio.master;
+                const float volume = Ship::Settings.audio.master;
                 ImGui::Text("Master Volume: %d %%", static_cast<int>(100 * volume));
-                if (ImGui::SliderFloat("##Master_Vol", &Game::Settings.audio.master, 0.0f, 1.0f, "")) {
+                if (ImGui::SliderFloat("##Master_Vol", &Ship::Settings.audio.master, 0.0f, 1.0f, "")) {
                     CVar_SetFloat(const_cast<char*>("gGameMasterVolume"), volume);
                     needs_save = true;
                 }
 
-                BindAudioSlider("Main Music Volume: %d %%", "gMainMusicVolume", &Game::Settings.audio.music_main, SEQ_BGM_MAIN);
-                BindAudioSlider("Sub Music Volume: %d %%", "gSubMusicVolume", &Game::Settings.audio.music_sub, SEQ_BGM_SUB);
-                BindAudioSlider("Sound Effects Volume: %d %%", "gSFXMusicVolume", &Game::Settings.audio.sfx, SEQ_SFX);
-                BindAudioSlider("Fanfare Volume: %d %%", "gFanfareVolume", &Game::Settings.audio.fanfare, SEQ_FANFARE);
+                BindAudioSlider("Main Music Volume: %d %%", "gMainMusicVolume", &Ship::Settings.audio.music_main, SEQ_BGM_MAIN);
+                BindAudioSlider("Sub Music Volume: %d %%", "gSubMusicVolume", &Ship::Settings.audio.music_sub, SEQ_BGM_SUB);
+                BindAudioSlider("Sound Effects Volume: %d %%", "gSFXMusicVolume", &Ship::Settings.audio.sfx, SEQ_SFX);
+                BindAudioSlider("Fanfare Volume: %d %%", "gFanfareVolume", &Ship::Settings.audio.fanfare, SEQ_FANFARE);
 
                 ImGui::EndMenu();
             }
 
             if (ImGui::BeginMenu("Controller")) {
-                ImGui::Text("Gyro Sensitivity: %d %%", static_cast<int>(100 * Game::Settings.controller.gyro_sensitivity));
-                if (ImGui::SliderFloat("##GYROSCOPE", &Game::Settings.controller.gyro_sensitivity, 0.0f, 1.0f, "")) {
+                ImGui::Text("Gyro Sensitivity: %d %%", static_cast<int>(100 * Ship::Settings.controller.gyro_sensitivity));
+                if (ImGui::SliderFloat("##GYROSCOPE", &Ship::Settings.controller.gyro_sensitivity, 0.0f, 1.0f, "")) {
                     needs_save = true;
                 }
 
                 if (ImGui::Button("Recalibrate Gyro")) {
-                    Game::Settings.controller.gyroDriftX = 0;
-                    Game::Settings.controller.gyroDriftY = 0;
+                    Ship::Settings.controller.gyroDriftX = 0;
+                    Ship::Settings.controller.gyroDriftY = 0;
                 }
 
                 ImGui::Separator();
 
-                ImGui::Text("Rumble Strength: %d %%", static_cast<int>(100 * Game::Settings.controller.rumble_strength));
-                if (ImGui::SliderFloat("##RUMBLE", &Game::Settings.controller.rumble_strength, 0.0f, 1.0f, "")) {
+                ImGui::Text("Rumble Strength: %d %%", static_cast<int>(100 * Ship::Settings.controller.rumble_strength));
+                if (ImGui::SliderFloat("##RUMBLE", &Ship::Settings.controller.rumble_strength, 0.0f, 1.0f, "")) {
                     needs_save = true;
                 }
 
-                if (ImGui::Checkbox("Show Inputs", &Game::Settings.controller.input_enabled)) {
+                if (ImGui::Checkbox("Show Inputs", &Ship::Settings.controller.input_enabled)) {
                     needs_save = true;
                 }
 
-                ImGui::Text("Input Scale: %.1f", Game::Settings.controller.input_scale);
-                if (ImGui::SliderFloat("##Input", &Game::Settings.controller.input_scale, 1.0f, 3.0f, "")) {
+                ImGui::Text("Input Scale: %.1f", Ship::Settings.controller.input_scale);
+                if (ImGui::SliderFloat("##Input", &Ship::Settings.controller.input_scale, 1.0f, 3.0f, "")) {
                     needs_save = true;
                 }
 
@@ -336,13 +336,13 @@ namespace SohImGui {
                 ImGui::Text("Gameplay");
                 ImGui::Separator();
 
-                if (ImGui::Checkbox("Fast Text", &Game::Settings.enhancements.fast_text)) {
-                    CVar_SetS32(const_cast<char*>("gFastText"), Game::Settings.enhancements.fast_text);
+                if (ImGui::Checkbox("Fast Text", &Ship::Settings.enhancements.fast_text)) {
+                    CVar_SetS32(const_cast<char*>("gFastText"), Ship::Settings.enhancements.fast_text);
                     needs_save = true;
                 }
 
-                if (ImGui::Checkbox("Minimal UI", &Game::Settings.enhancements.minimal_ui)) {
-                    CVar_SetS32(const_cast<char*>("gMinimalUI"), Game::Settings.enhancements.minimal_ui);
+                if (ImGui::Checkbox("Minimal UI", &Ship::Settings.enhancements.minimal_ui)) {
+                    CVar_SetS32(const_cast<char*>("gMinimalUI"), Ship::Settings.enhancements.minimal_ui);
                     needs_save = true;
                 }
 
@@ -350,16 +350,16 @@ namespace SohImGui {
                 ImGui::Separator();
 
                 if (UseInternalRes()) {
-                    HOOK(ImGui::Checkbox("N64 Mode", &Game::Settings.debug.n64mode));
+                    HOOK(ImGui::Checkbox("N64 Mode", &Ship::Settings.debug.n64mode));
                 }
 
-                if (ImGui::Checkbox("Animated Link in Pause Menu", &Game::Settings.enhancements.animated_pause_menu)) {
-                    CVar_SetS32(const_cast<char*>("gPauseLiveLink"), Game::Settings.enhancements.animated_pause_menu);
+                if (ImGui::Checkbox("Animated Link in Pause Menu", &Ship::Settings.enhancements.animated_pause_menu)) {
+                    CVar_SetS32(const_cast<char*>("gPauseLiveLink"), Ship::Settings.enhancements.animated_pause_menu);
                     needs_save = true;
                 }
 
-                if (ImGui::Checkbox("Disable LOD", &Game::Settings.enhancements.disable_lod)) {
-                    CVar_SetS32(const_cast<char*>("gDisableLOD"), Game::Settings.enhancements.disable_lod);
+                if (ImGui::Checkbox("Disable LOD", &Ship::Settings.enhancements.disable_lod)) {
+                    CVar_SetS32(const_cast<char*>("gDisableLOD"), Ship::Settings.enhancements.disable_lod);
                     needs_save = true;
                 }
 
@@ -367,58 +367,58 @@ namespace SohImGui {
             }
 
             if (ImGui::BeginMenu("Developer Tools")) {
-                HOOK(ImGui::MenuItem("Stats", nullptr, &Game::Settings.debug.soh));
+                HOOK(ImGui::MenuItem("Stats", nullptr, &Ship::Settings.debug.soh));
                 HOOK(ImGui::MenuItem("Console", nullptr, &console->opened));
-                
+
                 ImGui::Text("Debug");
                 ImGui::Separator();
-                
-                if (ImGui::Checkbox("Debug Mode", &Game::Settings.cheats.debug_mode)) {
-                    CVar_SetS32(const_cast<char*>("gDebugEnabled"), Game::Settings.cheats.debug_mode);
+
+                if (ImGui::Checkbox("Debug Mode", &Ship::Settings.cheats.debug_mode)) {
+                    CVar_SetS32(const_cast<char*>("gDebugEnabled"), Ship::Settings.cheats.debug_mode);
                     needs_save = true;
                 }
 
                 ImGui::EndMenu();
             }
-            
+
             if (ImGui::BeginMenu("Cheats")) {
-                if (ImGui::Checkbox("Infinite Money", &Game::Settings.cheats.infinite_money)) {
-                    CVar_SetS32(const_cast<char*>("gInfiniteMoney"), Game::Settings.cheats.infinite_money);
+                if (ImGui::Checkbox("Infinite Money", &Ship::Settings.cheats.infinite_money)) {
+                    CVar_SetS32(const_cast<char*>("gInfiniteMoney"), Ship::Settings.cheats.infinite_money);
                     needs_save = true;
                 }
 
-                if (ImGui::Checkbox("Infinite Health", &Game::Settings.cheats.infinite_health)) {
-                    CVar_SetS32(const_cast<char*>("gInfiniteHealth"), Game::Settings.cheats.infinite_health);
+                if (ImGui::Checkbox("Infinite Health", &Ship::Settings.cheats.infinite_health)) {
+                    CVar_SetS32(const_cast<char*>("gInfiniteHealth"), Ship::Settings.cheats.infinite_health);
                     needs_save = true;
                 }
 
-                if (ImGui::Checkbox("Infinite Ammo", &Game::Settings.cheats.infinite_ammo)) {
-                    CVar_SetS32(const_cast<char*>("gInfiniteAmmo"), Game::Settings.cheats.infinite_ammo);
+                if (ImGui::Checkbox("Infinite Ammo", &Ship::Settings.cheats.infinite_ammo)) {
+                    CVar_SetS32(const_cast<char*>("gInfiniteAmmo"), Ship::Settings.cheats.infinite_ammo);
                     needs_save = true;
                 }
 
-                if (ImGui::Checkbox("Infinite Magic", &Game::Settings.cheats.infinite_magic)) {
-                    CVar_SetS32(const_cast<char*>("gInfiniteMagic"), Game::Settings.cheats.infinite_magic);
+                if (ImGui::Checkbox("Infinite Magic", &Ship::Settings.cheats.infinite_magic)) {
+                    CVar_SetS32(const_cast<char*>("gInfiniteMagic"), Ship::Settings.cheats.infinite_magic);
                     needs_save = true;
                 }
-                
-                if (ImGui::Checkbox("No Clip", &Game::Settings.cheats.no_clip)) {
-                    CVar_SetS32(const_cast<char*>("gNoClip"), Game::Settings.cheats.no_clip);
+
+                if (ImGui::Checkbox("No Clip", &Ship::Settings.cheats.no_clip)) {
+                    CVar_SetS32(const_cast<char*>("gNoClip"), Ship::Settings.cheats.no_clip);
                     needs_save = true;
                 }
-                
-                if (ImGui::Checkbox("Climb Everything", &Game::Settings.cheats.climb_everything)) {
-                    CVar_SetS32(const_cast<char*>("gClimbEverything"), Game::Settings.cheats.climb_everything);
+
+                if (ImGui::Checkbox("Climb Everything", &Ship::Settings.cheats.climb_everything)) {
+                    CVar_SetS32(const_cast<char*>("gClimbEverything"), Ship::Settings.cheats.climb_everything);
                     needs_save = true;
                 }
-                
-                if (ImGui::Checkbox("Moon Jump on L", &Game::Settings.cheats.moon_jump_on_l)) {
-                    CVar_SetS32(const_cast<char*>("gMoonJumpOnL"), Game::Settings.cheats.moon_jump_on_l);
+
+                if (ImGui::Checkbox("Moon Jump on L", &Ship::Settings.cheats.moon_jump_on_l)) {
+                    CVar_SetS32(const_cast<char*>("gMoonJumpOnL"), Ship::Settings.cheats.moon_jump_on_l);
                     needs_save = true;
                 }
-                
-                if (ImGui::Checkbox("Super Tunic", &Game::Settings.cheats.super_tunic)) {
-                    CVar_SetS32(const_cast<char*>("gSuperTunic"), Game::Settings.cheats.super_tunic);
+
+                if (ImGui::Checkbox("Super Tunic", &Ship::Settings.cheats.super_tunic)) {
+                    CVar_SetS32(const_cast<char*>("gSuperTunic"), Ship::Settings.cheats.super_tunic);
                     needs_save = true;
                 }
 
@@ -445,7 +445,7 @@ namespace SohImGui {
         gfx_current_dimensions.width = size.x * gfx_current_dimensions.internal_mul;
         gfx_current_dimensions.height = size.y * gfx_current_dimensions.internal_mul;
         if (UseInternalRes()) {
-            if (Game::Settings.debug.n64mode) {
+            if (Ship::Settings.debug.n64mode) {
                 gfx_current_dimensions.width = 320;
                 gfx_current_dimensions.height = 240;
                 const int sw = size.y * 320 / 240;
@@ -460,7 +460,7 @@ namespace SohImGui {
         }
         ImGui::End();
 
-        if (Game::Settings.debug.soh) {
+        if (Ship::Settings.debug.soh) {
             const float framerate = ImGui::GetIO().Framerate;
             ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0, 0, 0, 0));
             ImGui::Begin("Debug Stats", nullptr, ImGuiWindowFlags_None);
@@ -475,10 +475,10 @@ namespace SohImGui {
             ImGui::PopStyleColor();
         }
 
-        const float scale = Game::Settings.controller.input_scale;
+        const float scale = Ship::Settings.controller.input_scale;
         ImVec2 BtnPos = ImVec2(160 * scale, 85 * scale);
 
-        if(Game::Settings.controller.input_enabled) {
+        if(Ship::Settings.controller.input_enabled) {
             ImGui::SetNextWindowSize(BtnPos);
             ImGui::SetNextWindowPos(ImVec2(main_pos.x + size.x - BtnPos.x - 20, main_pos.y + size.y - BtnPos.y - 20));
 

@@ -21,6 +21,7 @@
 #include <Texture.h>
 #include "Lib/stb/stb_image.h"
 #include "AudioPlayer.h"
+#include "SohHooks.h"
 #include "../soh/Enhancements/debugconsole.h"
 #include "Utils/BitConverter.h"
 
@@ -44,7 +45,7 @@ extern "C" void InitOTR() {
     OTRGlobals::Instance = new OTRGlobals();
     auto t = OTRGlobals::Instance->context->GetResourceManager()->LoadFile("version");
 
-    if (!t->bHasLoadError) 
+    if (!t->bHasLoadError)
     {
         //uint32_t gameVersion = BitConverter::ToUInt32BE((uint8_t*)t->buffer.get(), 0);
         uint32_t gameVersion = *((uint32_t*)t->buffer.get());
@@ -106,7 +107,7 @@ extern "C" void OTRResetScancode()
     OTRGlobals::Instance->context->GetWindow()->lastScancode = -1;
 }
 
-extern "C" uint32_t ResourceMgr_GetGameVersion() 
+extern "C" uint32_t ResourceMgr_GetGameVersion()
 {
     return OTRGlobals::Instance->context->GetResourceManager()->GetGameVersion();
 }
@@ -207,7 +208,13 @@ extern "C" Gfx* ResourceMgr_LoadGfxByName(char* path)
 {
     auto res = std::static_pointer_cast<Ship::DisplayList>(
         OTRGlobals::Instance->context->GetResourceManager()->LoadResource(path));
-    return (Gfx*)&res->instructions[0];
+    Gfx* dList = (Gfx*)&res->instructions[0];
+    Ship::bindHook(RMGR_LOAD_DLIST);
+    Ship::triggerHook(2,
+        HookParameter{ .name = "dlist", .parameter = &dList },
+        HookParameter{ .name = "path", .parameter = path }
+    );
+    return dList;
 }
 
 extern "C" char* ResourceMgr_LoadArrayByName(char* path)
@@ -223,7 +230,7 @@ extern "C" char* ResourceMgr_LoadArrayByNameAsVec3s(char* path) {
 
     if (res->cachedGameAsset != nullptr)
         return (char*)res->cachedGameAsset;
-    else 
+    else
     {
         Vec3s* data = (Vec3s*)malloc(sizeof(Vec3s) * res->scalars.size());
 
@@ -337,22 +344,6 @@ extern "C" Vtx * ResourceMgr_LoadVtxByName(char* path)
 {
 	auto res = std::static_pointer_cast<Ship::Array>(OTRGlobals::Instance->context->GetResourceManager()->LoadResource(path));
 	return (Vtx*)res->vertices.data();
-}
-
-extern "C" int ResourceMgr_OTRSigCheck(char* imgData)
-{
-	uintptr_t i = (uintptr_t)(imgData);
-
-    if (i == 0xD9000000 || i == 0xE7000000 || (i & 0xF0000000) == 0xF0000000)
-        return 0;
-
-    if ((i & 0xFF000000) != 0xAB000000 && (i & 0xFF000000) != 0xCD000000 && i != 0) {
-        if (imgData[0] == '_' && imgData[1] == '_' && imgData[2] == 'O' && imgData[3] == 'T' && imgData[4] == 'R' &&
-            imgData[5] == '_' && imgData[6] == '_')
-            return 1;
-    }
-
-    return 0;
 }
 
 extern "C" AnimationHeaderCommon* ResourceMgr_LoadAnimByName(char* path) {

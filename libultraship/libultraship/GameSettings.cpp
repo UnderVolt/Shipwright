@@ -11,18 +11,20 @@
 #include "GlobalCtx2.h"
 #include "SohImGuiImpl.h"
 #include "stox.h"
-#include "../../soh/include/z64audio.h"
 #include <string>
 #include "SohHooks.h"
 
+#ifndef LUS_LIBRARY
+#include "../../soh/include/z64audio.h"
+#endif
+
 #define ABS(var) var < 0 ? -(var) : var
 
-using namespace Ship;
-
-namespace Game {
+namespace Ship {
 
     bool DeSyncAudio = false;
     SoHConfigType Settings;
+    const std::string MainSection = MAIN_SECTION;
     const std::string ConfSection = DEBUG_SECTION;
     const std::string AudioSection = AUDIO_SECTION;
     const std::string ControllerSection = CONTROLLER_SECTION;
@@ -30,16 +32,20 @@ namespace Game {
     const std::string CheatSection = CHEATS_SECTION;
 
     void UpdateAudio() {
+#ifndef LUS_LIBRARY
         Audio_SetGameVolume(SEQ_BGM_MAIN, Settings.audio.music_main);
         Audio_SetGameVolume(SEQ_BGM_SUB, Settings.audio.music_sub);
         Audio_SetGameVolume(SEQ_FANFARE, Settings.audio.fanfare);
         Audio_SetGameVolume(SEQ_SFX, Settings.audio.sfx);
+#endif
     }
 
     void LoadSettings() {
 
         const std::shared_ptr<ConfigFile> pConf = GlobalCtx2::GetInstance()->GetConfig();
         ConfigFile& Conf = *pConf;
+
+        Settings.main.mods_directory = Conf[MainSection]["Mods Directory"];
 
         // Debug
         SohImGui::console->opened = stob(Conf[ConfSection]["console"]);
@@ -89,7 +95,7 @@ namespace Game {
 
         Settings.controller.input_enabled = stob(Conf[ControllerSection]["input_enabled"]);
         CVar_SetS32(const_cast<char*>("gInputEnabled"), Settings.controller.input_enabled);
-        
+
         // Cheats
         Settings.cheats.debug_mode = stob(Conf[CheatSection]["debug_mode"]);
         CVar_SetS32(const_cast<char*>("gDebugEnabled"), Settings.cheats.debug_mode);
@@ -165,12 +171,14 @@ namespace Game {
     }
 
     void InitSettings() {
-        ModInternal::registerHookListener({ AUDIO_INIT, [](HookEvent ev) {
+        Ship::registerHookListener({ AUDIO_INIT, [](HookEvent ev) {
             UpdateAudio();
         }});
     }
 
     void SetSeqPlayerVolume(SeqPlayers playerId, float volume) {
+#ifndef LUS_LIBRARY
         Audio_SetGameVolume(playerId, volume);
+#endif
     }
 }

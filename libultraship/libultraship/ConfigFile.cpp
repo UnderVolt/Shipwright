@@ -56,6 +56,7 @@ namespace Ship {
 
 	bool ConfigFile::CreateDefaultConfig() {
 		(*this)["ARCHIVE"]["Main Archive"] = "oot.otr";
+		(*this)["ARCHIVE"]["Mods Directory"] = "mods/";
 		(*this)["ARCHIVE"]["Patches Directory"] = "";
 
 		(*this)["CONTROLLERS"]["CONTROLLER 1"] = "Auto";

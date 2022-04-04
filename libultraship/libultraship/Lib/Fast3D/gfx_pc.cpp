@@ -815,9 +815,9 @@ static void import_texture(int i, int tile) {
     uint8_t siz = rdp.texture_tile[tile].siz;
     uint32_t tmem_index = rdp.texture_tile[tile].tmem_index;
 
-    // OTRTODO: Move it to a function to be faster 
-    // ModInternal::bindHook(LOOKUP_TEXTURE);
-    // ModInternal::initBindHook(8,
+    // OTRTODO: Move it to a function to be faster
+    // Ship::bindHook(LOOKUP_TEXTURE);
+    // Ship::initBindHook(8,
     //     HOOK_PARAMETER("gfx_api", gfx_get_current_rendering_api()),
     //     HOOK_PARAMETER("path", rdp.loaded_texture[tmem_index].otr_path),
     //     HOOK_PARAMETER("node", &rendering_state.textures[i]),
@@ -828,7 +828,7 @@ static void import_texture(int i, int tile) {
     //     HOOK_PARAMETER("addr", const_cast<uint8_t*>(rdp.loaded_texture[tmem_index].addr))
     // );
     //
-    // if (ModInternal::callBindHook(0))
+    // if (Ship::callBindHook(0))
     //     return;
 
     if (gfx_texture_cache_lookup(i, tile))
@@ -2393,11 +2393,9 @@ static void gfx_run_dl(Gfx* cmd) {
                 uintptr_t i = (uintptr_t) seg_addr(cmd->words.w1);
 
                 char* imgData = (char*)i;
-
                 if ((i & 0xF0000000) != 0xF0000000)
                     if (ResourceMgr_OTRSigCheck(imgData) == 1)
                         i = (uintptr_t)ResourceMgr_LoadTexByName(imgData);
-
                     gfx_dp_set_texture_image(C0(21, 3), C0(19, 2), C0(0, 10), (void*) i, imgData);
                 break;
             }
@@ -2670,9 +2668,8 @@ void gfx_init(struct GfxWindowManagerAPI *wapi, struct GfxRenderingAPI *rapi, co
         //gfx_lookup_or_create_shader_program(precomp_shaders[i]);
     }
 
-    ModInternal::bindHook(GFX_INIT);
-    ModInternal::initBindHook(0);
-    ModInternal::callBindHook(0);
+    Ship::bindHook(GFX_INIT);
+    Ship::triggerHook(0);
 }
 
 struct GfxRenderingAPI *gfx_get_current_rendering_api(void) {
