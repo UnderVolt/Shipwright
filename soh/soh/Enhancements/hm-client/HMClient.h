@@ -1,10 +1,11 @@
 #pragma once
 
+#include <vector>
 #include "api/HMTypes.h"
 
 struct HMSettings {
     AuthSession session;
-    CloudSave saves[];
+    std::vector<CloudSave> saves;
 };
 
 class HMClient {

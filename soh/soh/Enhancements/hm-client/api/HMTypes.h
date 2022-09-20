@@ -39,7 +39,7 @@ struct CloudSave {
 struct AuthSession {
     std::string access_token;
     std::string refresh_token;
-    double expires_in;
+    uint64_t expires_in;
 };
 
 struct User {
@@ -49,26 +49,26 @@ struct User {
     std::string email;
     std::string authid;
     std::string created_at;
+    uint16_t slots;
 };
 
 struct Save {
     std::string id;
     std::string name;
-    std::string blob;
+    std::vector<uint8_t> blob;
     std::string md5;
     GameID game_id;
     std::string game_version;
     std::string rom_version;
-    int32_t version;
+    uint32_t version;
     Endianess endianess;
     nlohmann::json metadata;
     std::string updated_at;
 };
 
-static std::string i_devices[] = { "windows", "linux", "mac", "xbox", "wiiu", "switch", "ios", "android", "web" };
 static std::vector<std::string> i_games = { "TLOZPO0" };
+static std::vector<std::string> i_devices = { "windows", "linux", "mac", "xbox", "wiiu", "switch", "ios", "android", "web" };
 static std::vector<std::string> i_endianess = { "big", "little", "none" };
-
 
 #define LINK(type, key) j.at(#key).get_to(type.key)
 
@@ -82,6 +82,7 @@ void from_json(const json& j, User& user) {
     LINK(user, uuid);
     LINK(user, user);
     LINK(user, discriminator);
+    LINK(user, slots);
     LINK(user, email);
     LINK(user, authid);
     LINK(user, created_at);

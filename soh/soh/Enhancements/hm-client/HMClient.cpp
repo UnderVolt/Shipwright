@@ -22,7 +22,7 @@ void HMClient::Save() {
 
 }
 
-char* inputBuffer;
+char inputBuffer[6 + 1] = "";
 #define CODE_BUFFER_SIZE 6 + 1
 
 void DrawHMGui(bool& open) {
@@ -36,7 +36,7 @@ void DrawHMGui(bool& open) {
     ImGui::Text("Welcome!");
     ImGui::Text("Enter the code that appears on your screen.");
     ImGui::Dummy(ImVec2(0, 10));
-    ImGui::InputTextWithHint("##hmcode", "Code: 123456", inputBuffer, CODE_BUFFER_SIZE, ImGuiInputTextFlags_Numerical | ImGuiInputTextFlags_CharsNoBlank);
+    ImGui::InputTextWithHint("##hmcode", "Code: 123456", inputBuffer, sizeof(inputBuffer) / sizeof(char), ImGuiInputTextFlags_Numerical | ImGuiInputTextFlags_CharsNoBlank);
     ImGui::Dummy(ImVec2(0, 10));
     if (ImGui::Button("Link")) {
         std::cout << inputBuffer << std::endl;
@@ -45,8 +45,6 @@ void DrawHMGui(bool& open) {
 }
 
 void InitHMClient() {
-    inputBuffer = new char[CODE_BUFFER_SIZE];
-    strcpy(inputBuffer, "");
     SohImGui::AddWindow("Cloud Saves", "HMClient", DrawHMGui);
 }
 
