@@ -62,7 +62,9 @@
 #include <functions.h>
 #include "Enhancements/item-tables/ItemTableManager.h"
 #include "GameMenuBar.hpp"
+#include "Enhancements/hm-client/HMClient.h"
 
+HMClient* HMClient::Instance;
 OTRGlobals* OTRGlobals::Instance;
 SaveManager* SaveManager::Instance;
 CustomMessageManager* CustomMessageManager::Instance;
@@ -325,6 +327,7 @@ extern "C" void InitOTR() {
     SohImGui::AddSetupHooksDelegate(GameMenuBar::SetupHooks);
     SohImGui::RegisterMenuDrawMethod(GameMenuBar::Draw);
 
+    HMClient::Instance = new HMClient();
     OTRGlobals::Instance = new OTRGlobals();
     SaveManager::Instance = new SaveManager();
     CustomMessageManager::Instance = new CustomMessageManager();
@@ -342,6 +345,7 @@ extern "C" void InitOTR() {
     OTRAudio_Init();
     InitCosmeticsEditor();
     GameControlEditor::Init();
+    HMClient_Init();
     DebugConsole_Init();
     Debug_Init();
     Rando_Init();
@@ -1611,7 +1615,7 @@ extern "C" CustomMessageEntry Randomizer_GetGanonHintText() {
 }
 
 extern "C" CustomMessageEntry Randomizer_GetHintFromCheck(RandomizerCheck check) {
-    // we don't want to make a copy of the std::string returned from GetHintFromCheck 
+    // we don't want to make a copy of the std::string returned from GetHintFromCheck
     // so we're just going to let RVO take care of it
     const CustomMessageEntry hintText = CustomMessageManager::Instance->RetrieveMessage(Randomizer::hintMessageTableID, check);
     return hintText;

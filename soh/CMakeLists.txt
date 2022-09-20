@@ -329,7 +329,7 @@ set(Source_Files__soh__Enhancements__randomizer__3drando__hint_list
     "soh/Enhancements/randomizer/3drando/hint_list/hint_list_exclude_overworld.cpp"
     "soh/Enhancements/randomizer/3drando/hint_list/hint_list_item.cpp"
 )
-source_group("Source Files\\soh\\Enhancements\\randomizer\\3drando\\hint_list" FILES ${Source_Files__soh__Enhancements__randomizer__3drando__hint_list}) 
+source_group("Source Files\\soh\\Enhancements\\randomizer\\3drando\\hint_list" FILES ${Source_Files__soh__Enhancements__randomizer__3drando__hint_list})
 
 set(Source_Files__soh__Enhancements__randomizer__3drando__location_access
     "soh/Enhancements/randomizer/3drando/location_access/locacc_bottom_of_the_well.cpp"
@@ -352,7 +352,7 @@ set(Source_Files__soh__Enhancements__randomizer__3drando__location_access
     "soh/Enhancements/randomizer/3drando/location_access/locacc_water_temple.cpp"
     "soh/Enhancements/randomizer/3drando/location_access/locacc_zoras_domain.cpp"
 )
-source_group("Source Files\\soh\\Enhancements\\randomizer\\3drando\\location_access" FILES ${Source_Files__soh__Enhancements__randomizer__3drando__location_access})   
+source_group("Source Files\\soh\\Enhancements\\randomizer\\3drando\\location_access" FILES ${Source_Files__soh__Enhancements__randomizer__3drando__location_access})
 
 set(Source_Files__soh__Enhancements__custom_message
     "soh/Enhancements/custom-message/CustomMessageManager.cpp"
@@ -365,6 +365,37 @@ set(Source_Files__soh__Enhancements__item_tables
 )
 
 source_group("Source Files\\soh\\Enhancements\\item-tables" FILES ${Source_Files__soh__Enhancements__item_tables})
+
+set(Header_Files__soh__Enhancements__hm_client
+    "soh/Enhancements/hm-client/HMClient.h"
+)
+
+set(Source_Files__soh__Enhancements__hm_client
+    "soh/Enhancements/hm-client/HMClient.cpp"
+)
+source_group("Header Files\\soh\\Enhancements\\hm-client" FILES ${Header_Files__soh__Enhancements__hm_client})
+source_group("Source Files\\soh\\Enhancements\\hm-client" FILES ${Source_Files__soh__Enhancements__hm_client})
+
+set(Header_Files__soh__Enhancements__hm_client_api
+    "soh/Enhancements/hm-client/api/HMApi.h"
+    "soh/Enhancements/hm-client/api/HMTypes.h"
+)
+
+set(Source_Files__soh__Enhancements__hm_client_api
+    "soh/Enhancements/hm-client/api/HMApi.cpp"
+)
+source_group("Header Files\\soh\\Enhancements\\hm-client\\api" FILES ${Header_Files__soh__Enhancements__hm_client_api})
+source_group("Source Files\\soh\\Enhancements\\hm-client\\api" FILES ${Source_Files__soh__Enhancements__hm_client_api})
+
+set(Header_Files__soh__Enhancements__hm_client_utils
+    "soh/Enhancements/hm-client/utils/Base64.h"
+)
+
+set(Source_Files__soh__Enhancements__hm_client_utils
+    "soh/Enhancements/hm-client/utils/Base64.cpp"
+)
+source_group("Header Files\\soh\\Enhancements\\hm-client\\utils" FILES ${Header_Files__soh__Enhancements__hm_client_utils})
+source_group("Source Files\\soh\\Enhancements\\hm-client\\utils" FILES ${Source_Files__soh__Enhancements__hm_client_utils})
 
 set(Source_Files__src__boot
     "src/boot/assert.c"
@@ -1576,6 +1607,9 @@ set(ALL_FILES
     ${Header_Files__soh__Enhancements__randomizer}
     ${Header_Files__soh__Enhancements__randomizer__3drando}
     ${Header_Files__soh__Enhancements__item_tables}
+    ${Header_Files__soh__Enhancements__hm_client}
+    ${Header_Files__soh__Enhancements__hm_client_api}
+    ${Header_Files__soh__Enhancements__hm_client_utils}
     ${Header_Files__soh__Enhancements__custom_message}
     ${Source_Files__soh}
     ${Source_Files__soh__Enhancements}
@@ -1587,6 +1621,9 @@ set(ALL_FILES
     ${Source_Files__soh__Enhancements__randomizer__3drando__hint_list}
     ${Source_Files__soh__Enhancements__randomizer__3drando__location_access}
     ${Source_Files__soh__Enhancements__item_tables}
+    ${Source_Files__soh__Enhancements__hm_client}
+    ${Source_Files__soh__Enhancements__hm_client_api}
+    ${Source_Files__soh__Enhancements__hm_client_utils}
     ${Source_Files__soh__Enhancements__custom_message}
     ${Source_Files__src__boot}
     ${Source_Files__src__buffers}
@@ -1924,12 +1961,22 @@ add_dependencies(${PROJECT_NAME}
     libultraship
 )
 
+find_package(CURL REQUIRED)
+
+include(FetchContent)
+FetchContent_Declare(
+    cpr GIT_REPOSITORY https://github.com/HarbourMasters/cpr.git
+    GIT_TAG 138bfc5f4f807ccd0fac4a779933af6ba1912962
+)
+FetchContent_MakeAvailable(cpr)
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
 		set(ADDITIONAL_LIBRARY_DEPENDENCIES
 			"libultraship;"
 			"ZAPDUtils;"
 			"glu32;"
+            "cpr::cpr;"
 			"SDL2::SDL2;"
 			"SDL2::SDL2main;"
 			"glfw;"
@@ -1938,11 +1985,12 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 			"version;"
 			"setupapi"
 		)
-	elseif("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32") 
+	elseif("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32")
 		set(ADDITIONAL_LIBRARY_DEPENDENCIES
 			"libultraship;"
 			"ZAPDUtils;"
 			"glu32;"
+            "cpr::cpr;"
 			"SDL2::SDL2;"
 			"SDL2::SDL2main;"
 			"glfw;"
@@ -1959,6 +2007,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "libultraship;"
         "ZAPDUtils;"
+        cpr::cpr
         SDL2::SDL2
         -lglad
         Threads::Threads
@@ -1968,6 +2017,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "libultraship;"
         "ZAPDUtils;"
+        cpr::cpr
         SDL2::SDL2-static
 
         "$<$<CONFIG:Debug>:-Wl,--wrap=abort>"
@@ -1983,6 +2033,7 @@ else()
         "libultraship;"
         "ZAPDUtils;"
 		SDL2::SDL2
+        cpr::cpr
 		${CMAKE_DL_LIBS}
 		Threads::Threads
 	)
@@ -2009,9 +2060,9 @@ if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS")
     if (NOT TARGET pathconf)
         add_library(pathconf OBJECT platform/pathconf.c)
     endif()
-    target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}" $<TARGET_OBJECTS:pathconf> )
+    target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}" ${CURL_LIBRARIES} $<TARGET_OBJECTS:pathconf> )
 else()
-    target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
+    target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}" ${CURL_LIBRARIES})
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
@@ -2021,7 +2072,7 @@ nx_generate_nacp(Ship.nacp
    AUTHOR "Harbour Masters"
    VERSION "4.0.0"
 )
- 
+
 nx_create_nro(soh
     NACP Ship.nacp
     ICON ${CMAKE_CURRENT_SOURCE_DIR}/icon.jpg

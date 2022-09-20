@@ -1300,6 +1300,19 @@ namespace GameMenuBar {
 
         ImGui::SetCursorPosY(0.0f);
 
+        if(ImGui::BeginMenu("Cloud Saves")) {
+            static ImVec2 buttonSize(160.0f, 0.0f);
+            if (ImGui::Button(GetWindowButtonText("Link your Device", CVar_GetS32("gCloudSavesMenu", 0)).c_str(), buttonSize)) {
+                bool currentValue = CVar_GetS32("gCloudSavesMenu", 0);
+                CVar_SetS32("gCloudSavesMenu", !currentValue);
+                SohImGui::RequestCvarSaveOnNextTick();
+                SohImGui::EnableWindow("HMClient", CVar_GetS32("gCloudSavesMenu", 0));
+            }
+            ImGui::EndMenu();
+        }
+
+        ImGui::SetCursorPosY(0.0f);
+
         if (ImGui::BeginMenu("Developer Tools"))
         {
             UIWidgets::EnhancementCheckbox("OoT Debug Mode", "gDebugEnabled");
