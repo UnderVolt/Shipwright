@@ -4,9 +4,9 @@
 Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::string & device_version, GameID game_id, const std::string & game_version) {
 
     json body = {
-        { "device_type", _devices[device_type] },
+        { "device_type", i_devices[device_type] },
         { "device_version", device_version },
-        { "game_id", _games[game_id] },
+        { "game_id", i_games[game_id] },
         { "game_version", game_version },
         { "hardware_id", "tbd" }
     };
@@ -23,7 +23,7 @@ Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::stri
 
     json j = json::parse(r.text);
 
-    return { ResponseCodes::OK, "NONE", j["token"].get<AuthSession>() };
+    return Response{ ResponseCodes::OK, "NONE", j.get<AuthSession>() };
 }
 
 Response HMApi::GetUser(const AuthSession & auth) {
@@ -41,14 +41,14 @@ Response HMApi::GetUser(const AuthSession & auth) {
 
     json j = json::parse(r.text);
 
-    return { ResponseCodes::OK, "NONE", j.get<User>() };
+    return Response{ ResponseCodes::OK, "NONE", j.get<User>() };
 }
 
 Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::string & rom_version) {
     cpr::Response r = cpr::Get(
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/" },
         cpr::Parameters{
-            { "game_id", _games[game_id] },
+            { "game_id", i_games[game_id] },
             { "rom_version", rom_version }
         },
         cpr::Header{
@@ -65,20 +65,20 @@ Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::s
 
     std::vector<Save> saves;
 
-    for (auto& raw : j["saves"]) {
+    for (auto& raw : j) {
         saves.push_back(raw.get<Save>());
     }
 
-    return { ResponseCodes::OK, "NONE", saves };
+    return Response{ ResponseCodes::OK, "NONE", saves };
 }
 
 Response HMApi::NewSave(const AuthSession & auth, const std::string & name, const std::string & blob, GameID game_id, const std::string & rom_version, const std::string & game_version, int32_t version, Endianess endianess, const std::string& id) {
     json body = {
         { "name", name },
         { "blob", blob },
-        { "game_id", _games[game_id] },
+        { "game_id", i_games[game_id] },
         { "version", version },
-        { "endianess", _endianess[endianess] },
+        { "endianess", i_endianess[endianess] },
         { "rom_version", rom_version },
         { "game_version", game_version },
     };
@@ -90,9 +90,7 @@ Response HMApi::NewSave(const AuthSession & auth, const std::string & name, cons
         return { (ResponseCodes) r.status_code, j["error"] };
     }
 
-    json j = json::parse(r.text);
-
-    return { ResponseCodes::OK, "NONE", j["id"] };
+    return Response{ ResponseCodes::OK, "NONE", r.text };
 }
 
 Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
@@ -110,7 +108,7 @@ Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
 
     json j = json::parse(r.text);
 
-    return { ResponseCodes::OK, "NONE", j["save"].get<Save>() };
+    return Response{ ResponseCodes::OK, "NONE", j.get<Save>() };
 }
 
 Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
@@ -121,5 +119,5 @@ Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
         return { (ResponseCodes)r.status_code, j["error"] };
     }
 
-    return { ResponseCodes::OK };
+    return Response{ ResponseCodes::OK };
 }

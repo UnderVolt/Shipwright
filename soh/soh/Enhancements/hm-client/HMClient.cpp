@@ -13,7 +13,7 @@ void HMClient::Init() {
     CVar* var = CVar_Get("gHMAccountData");
     if (var != nullptr) {
         std::string data = base64_decode(std::string(var->value.valueStr));
-        this->settings = json::parse(data).get<HMSettings>();
+        // this->settings = json::parse(data).get<HMSettings>();
         return;
     }
 }

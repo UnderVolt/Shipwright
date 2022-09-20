@@ -2,6 +2,11 @@
 
 #include "api/HMTypes.h"
 
+struct HMSettings {
+    AuthSession session;
+    CloudSave saves[];
+};
+
 class HMClient {
 public:
     static HMClient* Instance;
@@ -9,7 +14,7 @@ public:
     void Save();
 
   private:
-    HMSettings settings = { 0 };
+    HMSettings settings;
 };
 
 #ifdef __cplusplus
