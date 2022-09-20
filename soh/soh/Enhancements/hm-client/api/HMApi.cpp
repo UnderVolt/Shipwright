@@ -3,20 +3,20 @@
 
 Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::string & device_version, GameID game_id, const std::string & game_version) {
 
-	json body = {
+    json body = {
         { "device_type", _devices[device_type] },
         { "device_version", device_version },
         { "game_id", _games[game_id] },
         { "game_version", game_version },
-		{ "hardware_id", "tbd" }
+        { "hardware_id", "tbd" }
     };
 
     cpr::Response r = cpr::Post(
         cpr::Url{ HM_ENDPOINT "/api/v1/link/" + std::to_string(code) },
-		cpr::Body{body.dump()}
+        cpr::Body{body.dump()}
     );
 
-	if (r.status_code != ResponseCodes::OK) {
+    if (r.status_code != ResponseCodes::OK) {
         json j = json::parse(r.text);
         return { (ResponseCodes) r.status_code, j["error"] };
     }
@@ -30,11 +30,11 @@ Response HMApi::GetUser(const AuthSession & auth) {
     cpr::Response r = cpr::Get(
         cpr::Url{ HM_ENDPOINT "/api/v1/auth/me" },
         cpr::Header{
-			{ "authorization", "Auth " + auth.access_token }
+            { "authorization", "Auth " + auth.access_token }
         }
     );
 
-	if (r.status_code != ResponseCodes::OK) {
+    if (r.status_code != ResponseCodes::OK) {
         json j = json::parse(r.text);
         return { (ResponseCodes) r.status_code, j["error"] };
     }
@@ -47,12 +47,12 @@ Response HMApi::GetUser(const AuthSession & auth) {
 Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::string & rom_version) {
     cpr::Response r = cpr::Get(
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/" },
-        cpr::Parameters{ 
+        cpr::Parameters{
             { "game_id", _games[game_id] },
-			{ "rom_version", rom_version }
+            { "rom_version", rom_version }
         },
         cpr::Header{
-		    { "authorization", "Auth " + auth.access_token }
+            { "authorization", "Auth " + auth.access_token }
         }
     );
 
@@ -63,8 +63,8 @@ Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::s
 
     json j = json::parse(r.text);
 
-	std::vector<Save> saves;
-	
+    std::vector<Save> saves;
+
     for (auto& raw : j["saves"]) {
         saves.push_back(raw.get<Save>());
     }
@@ -82,7 +82,7 @@ Response HMApi::NewSave(const AuthSession & auth, const std::string & name, cons
         { "rom_version", rom_version },
         { "game_version", game_version },
     };
-	
+
     cpr::Response r = cpr::Post(cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id }, cpr::Body{ body.dump() });
 
     if (r.status_code != ResponseCodes::OK) {
@@ -99,7 +99,7 @@ Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
     cpr::Response r = cpr::Get(
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id },
         cpr::Header{
-		    { "authorization", "Auth " + auth.access_token }
+            { "authorization", "Auth " + auth.access_token }
         }
     );
 

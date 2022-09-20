@@ -18,13 +18,13 @@ enum DeviceType {
 };
 
 enum Endianess {
-	BIG,
-	LITTLE,
-	NONE
+    BIG,
+    LITTLE,
+    NONE
 };
 
 enum GameID {
-	OOT
+    OOT
 };
 
 enum ResponseCodes {
@@ -50,8 +50,8 @@ struct Response {
 
 static std::string _devices[] = {
     "windows", "linux"  , "mac",
-	"xbox"   , "wiiu"   , "switch",
-	"ios"    , "android", "web"
+    "xbox"   , "wiiu"   , "switch",
+    "ios"    , "android", "web"
 };
 static std::string _games[] = { "TLOZPO0" };
 static std::string _endianess[] = { "big", "little", "none" };
@@ -64,7 +64,7 @@ public:
 
     // Saves:
 
-	static Response ListSaves(const AuthSession& auth, GameID game_id, const std::string& rom_version);
+    static Response ListSaves(const AuthSession& auth, GameID game_id, const std::string& rom_version);
     static Response NewSave(const AuthSession& auth, const std::string& name, const std::string& blob, GameID game_id,
                             const std::string& rom_version, const std::string& game_version, int32_t version, Endianess endianess, const std::string& id = "");
     static Response LoadSave(const AuthSession& auth, const std::string& id);
