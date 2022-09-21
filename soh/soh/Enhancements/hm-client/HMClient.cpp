@@ -9,49 +9,71 @@
 #include "utils/StringHelper.h"
 #include "variables.h"
 #include <codecvt>
+#include "../../SaveManager.h"
 
 #ifdef _WIN32
 #define NOGDI
 #include <windows.h>
 #endif
 
+#define CODE_BUFFER_SIZE 6 + 1
+#define ROM_VERSION "Vanilla"
+
 using json = nlohmann::json;
+char inputBuffer[CODE_BUFFER_SIZE] = "";
+char nameInputBuffer[CODE_BUFFER_SIZE] = "";
 
 void HMClient::Init() {
     CVar* var = CVar_Get("gHMAccountData");
     if (var != nullptr) {
         std::string data = base64_decode(std::string(var->value.valueStr));
         this->session = json::parse(data).get<AuthSession>();
-
-        const Response res = HMApi::GetUser(session);
-
-        if (res.code != ResponseCodes::OK) {
-            SPDLOG_ERROR(res.error);
-            return;
-        }
-
-        const User user = std::any_cast<User>(res.data);
-        this->SetUser(user);
+        this->FetchData();
     }
+}
+
+void HMClient::FetchData(const bool save) {
+    const Response res = HMApi::GetUser(session);
+
+    if (res.code != ResponseCodes::OK) {
+        SPDLOG_ERROR(res.error);
+        return;
+    }
+
+    const User user = std::any_cast<User>(res.data);
+    this->SetUser(user);
+    this->SetMaxSlots(std::min(SaveManager::MaxFiles, (int)user.slots));
+
+    if (save) {
+        this->Save(session);
+    }
+	
+    const Response saves = HMApi::ListSaves(this->session, GameID::OOT, ROM_VERSION);
+
+    if (saves.code != ResponseCodes::OK) {
+        SPDLOG_ERROR(saves.error);
+        return;
+    }
+
+	this->saves = std::any_cast<std::vector<CloudSave>>(saves.data);
 }
 
 void HMClient::Save(const AuthSession& auth) {
     json session = auth;
     std::string data = base64_encode(session.dump());
     CVar_SetString("gHMAccountData", data.c_str());
+    SohImGui::RequestCvarSaveOnNextTick();
 }
-
-char inputBuffer[6 + 1] = "";
-#define CODE_BUFFER_SIZE 6 + 1
 
 void DrawLinkDeviceUI() {
     ImGui::Text("Welcome!");
     ImGui::Text("Enter the code that appears on your screen.");
     ImGui::Dummy(ImVec2(0, 10));
-    ImGui::InputTextWithHint("##hmcode", "Code: 123456", inputBuffer, sizeof(inputBuffer) / sizeof(char),
+    ImGui::InputTextWithHint("##hmcode", "Code: 123456", inputBuffer, CODE_BUFFER_SIZE,
                              ImGuiInputTextFlags_Numerical | ImGuiInputTextFlags_CharsNoBlank);
     ImGui::Dummy(ImVec2(0, 10));
-    if (ImGui::Button("Link") && strlen(inputBuffer) == 6) {
+
+    if (ImGui::Button("Link") && strlen(inputBuffer) == (CODE_BUFFER_SIZE - 1)) {
 
 #ifdef _WIN32
         HW_PROFILE_INFO hwInfo;
@@ -68,6 +90,8 @@ void DrawLinkDeviceUI() {
         std::string version = StringHelper::Sprintf("OS: %d", GetVersion());
 #elif defined(__WIIU__)
         DeviceType type = DeviceType::WII_U;
+#else
+#error "Unsupported platform!"
 #endif
 
         const Response res =
@@ -76,19 +100,73 @@ void DrawLinkDeviceUI() {
         if (res.code != ResponseCodes::OK) {
             SPDLOG_ERROR(res.error);
         } else {
-            const AuthSession session = std::any_cast<AuthSession>(res.data);
-            const User user = std::any_cast<User>(HMApi::GetUser(session).data);
-            HMClient::Instance->SetUser(user);
-            HMClient::Instance->Save(session);
-            SohImGui::RequestCvarSaveOnNextTick();
+            HMClient* instance = HMClient::Instance;
+            instance->SetSession(std::any_cast<AuthSession>(res.data));
+            instance->FetchData(true);
+            
             SPDLOG_INFO("Successfully linked device!");
         }
     }
 }
 
+void DrawSlotSelector(size_t slot) {
+    HMClient* instance = HMClient::Instance;
+    const User* user = instance->GetUser();
+
+    std::vector<CloudSave>& saves = instance->GetSaves();
+    std::vector<LinkedSave>& linkedSaves = instance->GetLinkedSaves();
+
+    ImGui::Text("Slot: %d", slot);
+    ImGui::SameLine();
+
+    LinkedSave& currentSave = linkedSaves.at(slot);
+
+    ImGui::SetNextItemWidth(100);
+    if (ImGui::BeginCombo(StringHelper::Sprintf("##hmslot%d", slot).c_str(), currentSave.name.empty() ? "[None]" : currentSave.name.c_str())) {
+        if (!saves.empty()) {
+            for (size_t slotId = 0; slotId < saves.size(); slotId++) {
+                const CloudSave& save = saves.at(slotId);
+
+                const bool is_selected = save.id == currentSave.id;
+                if (ImGui::Selectable(save.name.c_str(), is_selected)) {
+                    currentSave.id = save.id;
+                    currentSave.name = save.name;
+                }
+            }	
+        }
+
+        if (saves.size() < user->slots && ImGui::Selectable("[New Save]", false)) {
+            std::string saveName = std::string(nameInputBuffer);
+            const Response res = HMApi::NewSave(instance->GetSession(), saveName, GameID::OOT, ROM_VERSION,
+                                                std::string((char*)gBuildVersion), 1.0);
+
+            if (res.code != ResponseCodes::OK) {
+                SPDLOG_ERROR(res.error);
+            } else {
+                std::string saveId = std::any_cast<std::string>(res.data);
+                currentSave.id = saveId;
+                currentSave.name = saveName;
+                saves.push_back({ .id = saveId, .name = saveName });
+            }
+        }
+        ImGui::EndCombo();
+    }
+    if (!currentSave.id.empty()) {
+        ImGui::SameLine();
+        ImGui::Button("Delete");
+    }
+}
+
 void DrawManagerUI(const User* user) {
+    HMClient* instance = HMClient::Instance;
     ImGui::Text("Welcome %s!", user->user.c_str());
-    ImGui::Text("We fucking did it!");
+    ImGui::Dummy(ImVec2(0, 5));
+    ImGui::Text("Linked Saves");
+    ImGui::Dummy(ImVec2(0, 5));
+    for (size_t slot = 0; slot < instance->GetMaxSlots(); slot++) {
+        DrawSlotSelector(slot);   
+    }
+
 }
 
 void DrawHMGui(bool& open) {
@@ -98,7 +176,7 @@ void DrawHMGui(bool& open) {
         return;
     }
 
-    ImGui::Begin("Harbour Masters Account##HMClient", &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking);
+    ImGui::Begin("Harbour Masters Account##HMClient", &open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking);
     const User* user = HMClient::Instance->GetUser();
     if (user != nullptr) {
         DrawManagerUI(user);

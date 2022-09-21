@@ -2,6 +2,7 @@
 
 #include <any>
 #include <string>
+#include <iostream>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -31,9 +32,9 @@ struct Response {
     std::any data;
 };
 
-struct CloudSave {
-    int slot;
-    std::string save_id;
+struct LinkedSave {
+    std::string id;
+    std::string name;
 };
 
 struct AuthSession {
@@ -49,10 +50,10 @@ struct User {
     std::string email;
     std::string authid;
     std::string created_at;
-    uint16_t slots;
+    uint32_t slots;
 };
 
-struct Save {
+struct CloudSave {
     std::string id;
     std::string name;
     std::vector<uint8_t> blob;
@@ -83,14 +84,14 @@ void from_json(const json& j, AuthSession& auth) {
     LINK(auth, expires_in);
 }
 
-void to_json(json& j, const CloudSave& save) {
-    j = json{ CNV(save, slot), CNV(save, save_id) };
-}
+//void to_json(json& j, const LinkSave& save) {
+//    j = json{ CNV(save, slot), CNV(save, save_id) };
+//}
 
-void from_json(const json& j, CloudSave& save) {
-    LINK(save, slot);
-    LINK(save, save_id);
-}
+//void from_json(const json& j, LinkSave& save) {
+//    LINK(save, slot);
+//    LINK(save, save_id);
+//}
 
 void from_json(const json& j, User& user) {
     LINK(user, uuid);
@@ -99,18 +100,22 @@ void from_json(const json& j, User& user) {
     LINK(user, email);
     LINK(user, authid);
     LINK(user, created_at);
-    // user.slots = (uint16_t) j["slots"];
+    user.slots = (uint32_t) j["slots"];
 }
 
-void from_json(const json& j, Save& save) {
-    LINK(save, id);
-    LINK(save, name);
-    LINK(save, blob);
-    LINK(save, md5);
-    LINK(save, game_version);
-    LINK(save, rom_version);
-    LINK(save, metadata);
-    LINK(save, updated_at);
-    save.game_id = (GameID)(std::find(i_games.begin(), i_games.end(), j["game_id"]) - i_games.begin());
-    save.endianess = (Endianess)(std::find(i_endianess.begin(), i_endianess.end(), j["endianess"]) - i_endianess.begin());
+void from_json(const json& j, CloudSave& save) {
+    try {
+        LINK(save, id);
+        LINK(save, name);
+        LINK(save, game_version);
+        LINK(save, rom_version);
+        LINK(save, updated_at);
+        save.game_id = (GameID)(std::find(i_games.begin(), i_games.end(), j["game_id"]) - i_games.begin());
+        save.endianess = (Endianess)(std::find(i_endianess.begin(), i_endianess.end(), j["endianess"]) - i_endianess.begin());
+        LINK(save, blob);
+        LINK(save, md5);
+        LINK(save, metadata);
+    } catch (const std::exception& e) {
+        std::cout << e.what() << std::endl;
+    }
 }

@@ -1,5 +1,6 @@
 #include "HMApi.h"
 #include <cpr/cpr.h>
+#include <iostream>
 
 Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::string & device_version, GameID game_id, const std::string & game_version, const std::string & hardware_id) {
 
@@ -60,18 +61,38 @@ Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::s
         return { (ResponseCodes)r.status_code, j["error"] };
     }
 
-    json j = json::parse(r.text);
-
-    std::vector<Save> saves;
-
-    for (auto& raw : j) {
-        saves.push_back(raw.get<Save>());
-    }
-
-    return Response{ ResponseCodes::OK, "NONE", saves };
+    json jobj = json::parse(r.text);
+    
+    return Response{ ResponseCodes::OK, "NONE", jobj.get<std::vector<CloudSave>>() };
 }
 
-Response HMApi::NewSave(const AuthSession & auth, const std::string & name, const std::string & blob, GameID game_id, const std::string & rom_version, const std::string & game_version, int32_t version, Endianess endianess, const std::string& id) {
+Response HMApi::NewSave(const AuthSession& auth, const std::string& name, GameID game_id, const std::string& rom_version, const std::string& game_version, int32_t version) {
+    json body = {
+        { "name", name },
+        { "game_id", i_games.at(game_id) },
+        { "version", version },
+        { "rom_version", rom_version },
+        { "game_version", game_version },
+    };
+
+    cpr::Response r = cpr::Post(
+        cpr::Url{ HM_ENDPOINT "/api/v1/saves/" },
+        cpr::Header{
+            { "authorization", "Auth " + auth.access_token },
+            { "Content-Type", "application/json" }
+        },
+        cpr::Body{ body.dump() }
+    );
+
+    if (r.status_code != ResponseCodes::OK) {
+        json j = json::parse(r.text);
+        return { (ResponseCodes)r.status_code, j["error"] };
+    }
+
+    return Response{ ResponseCodes::OK, "NONE", r.text };
+}
+
+Response HMApi::UploadSave(const AuthSession & auth, const std::string & name, const std::string & blob, GameID game_id, const std::string & rom_version, const std::string & game_version, int32_t version, Endianess endianess, const std::string& id) {
     json body = {
         { "name", name },
         { "blob", blob },
@@ -84,7 +105,10 @@ Response HMApi::NewSave(const AuthSession & auth, const std::string & name, cons
 
     cpr::Response r = cpr::Post(
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id },
-        cpr::Header{{ "Content-Type", "application/json" }},
+        cpr::Header{
+            { "authorization", "Auth " + auth.access_token },
+            { "Content-Type", "application/json" }
+        },
         cpr::Body{ body.dump() }
     );
 
@@ -111,11 +135,16 @@ Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
 
     json j = json::parse(r.text);
 
-    return Response{ ResponseCodes::OK, "NONE", j.get<Save>() };
+    return Response{ ResponseCodes::OK, "NONE", j.get<CloudSave>() };
 }
 
 Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
-    cpr::Response r = cpr::Delete(cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id });
+    cpr::Response r = cpr::Delete(
+        cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id },
+        cpr::Header{
+            { "authorization", "Auth " + auth.access_token }
+        }
+    );
 
     if (r.status_code != ResponseCodes::OK) {
         json j = json::parse(r.text);
