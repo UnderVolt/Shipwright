@@ -3,19 +3,21 @@
 #include <vector>
 #include "api/HMTypes.h"
 
-struct HMSettings {
-    AuthSession session;
-    std::vector<CloudSave> saves;
-};
-
 class HMClient {
 public:
     static HMClient* Instance;
     void Init();
-    void Save();
-
+    void Save(const AuthSession& auth);
+    void SetUser(const User& user) {
+        this->user = new User(user);
+    }
+    const User* GetUser() {
+        return this->user;
+    }
   private:
-    HMSettings settings;
+    User* user;
+    AuthSession session;
+    std::vector<CloudSave> saves;
 };
 
 #ifdef __cplusplus

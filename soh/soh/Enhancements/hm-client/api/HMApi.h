@@ -5,12 +5,16 @@
 
 using json = nlohmann::json;
 
+#ifdef NDEBUG
 #define HM_ENDPOINT "https://dev.shipofharkinian.com"
+#else
+#define HM_ENDPOINT "http://localhost:4000"
+#endif
 
 class HMApi {
 public:
     // User:
-    static Response LinkDevice(int32_t code, DeviceType device_type, const std::string& device_version, GameID game_id, const std::string& game_version);
+    static Response LinkDevice(int32_t code, DeviceType device_type, const std::string& device_version, GameID game_id, const std::string& game_version, const std::string & hardware_id);
     static Response GetUser(const AuthSession& auth);
 
     // Saves:

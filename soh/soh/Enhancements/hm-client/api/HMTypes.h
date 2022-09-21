@@ -1,6 +1,6 @@
 #pragma once
 
-#include <any>;
+#include <any>
 #include <string>
 #include <nlohmann/json.hpp>
 
@@ -33,7 +33,7 @@ struct Response {
 
 struct CloudSave {
     int slot;
-    std::string saveid;
+    std::string save_id;
 };
 
 struct AuthSession {
@@ -71,6 +71,11 @@ static std::vector<std::string> i_devices = { "windows", "linux", "mac", "xbox",
 static std::vector<std::string> i_endianess = { "big", "little", "none" };
 
 #define LINK(type, key) j.at(#key).get_to(type.key)
+#define CNV(type, key) { #key, type.key }
+
+void to_json(json& j, const AuthSession& auth) {
+    j = json{ CNV(auth, access_token), CNV(auth, refresh_token), CNV(auth, expires_in) };
+}
 
 void from_json(const json& j, AuthSession& auth) {
     LINK(auth, access_token);
@@ -78,14 +83,23 @@ void from_json(const json& j, AuthSession& auth) {
     LINK(auth, expires_in);
 }
 
+void to_json(json& j, const CloudSave& save) {
+    j = json{ CNV(save, slot), CNV(save, save_id) };
+}
+
+void from_json(const json& j, CloudSave& save) {
+    LINK(save, slot);
+    LINK(save, save_id);
+}
+
 void from_json(const json& j, User& user) {
     LINK(user, uuid);
     LINK(user, user);
     LINK(user, discriminator);
-    LINK(user, slots);
     LINK(user, email);
     LINK(user, authid);
     LINK(user, created_at);
+    // user.slots = (uint16_t) j["slots"];
 }
 
 void from_json(const json& j, Save& save) {

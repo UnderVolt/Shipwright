@@ -1,18 +1,19 @@
 #include "HMApi.h"
 #include <cpr/cpr.h>
 
-Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::string & device_version, GameID game_id, const std::string & game_version) {
+Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::string & device_version, GameID game_id, const std::string & game_version, const std::string & hardware_id) {
 
     json body = {
-        { "device_type", i_devices[device_type] },
+        { "device_type", i_devices.at(device_type) },
         { "device_version", device_version },
-        { "game_id", i_games[game_id] },
+        { "game_id", i_games.at(game_id) },
         { "game_version", game_version },
-        { "hardware_id", "tbd" }
+        { "hardware_id", hardware_id }
     };
 
     cpr::Response r = cpr::Post(
         cpr::Url{ HM_ENDPOINT "/api/v1/link/" + std::to_string(code) },
+		cpr::Header{{ "Content-Type", "application/json" }},
         cpr::Body{body.dump()}
     );
 
@@ -48,12 +49,10 @@ Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::s
     cpr::Response r = cpr::Get(
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/" },
         cpr::Parameters{
-            { "game_id", i_games[game_id] },
+            { "game_id", i_games.at(game_id) },
             { "rom_version", rom_version }
         },
-        cpr::Header{
-            { "authorization", "Auth " + auth.access_token }
-        }
+        cpr::Header{{ "authorization", "Auth " + auth.access_token }}
     );
 
     if (r.status_code != ResponseCodes::OK) {
@@ -76,14 +75,18 @@ Response HMApi::NewSave(const AuthSession & auth, const std::string & name, cons
     json body = {
         { "name", name },
         { "blob", blob },
-        { "game_id", i_games[game_id] },
+        { "game_id", i_games.at(game_id) },
         { "version", version },
-        { "endianess", i_endianess[endianess] },
+        { "endianess", i_endianess.at(endianess) },
         { "rom_version", rom_version },
         { "game_version", game_version },
     };
 
-    cpr::Response r = cpr::Post(cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id }, cpr::Body{ body.dump() });
+    cpr::Response r = cpr::Post(
+        cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id },
+        cpr::Header{{ "Content-Type", "application/json" }},
+        cpr::Body{ body.dump() }
+    );
 
     if (r.status_code != ResponseCodes::OK) {
         json j = json::parse(r.text);
