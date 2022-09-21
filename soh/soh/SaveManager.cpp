@@ -12,6 +12,7 @@
 #include <fstream>
 #include <filesystem>
 #include <array>
+#include "Enhancements/hm-client/HMClient.h"
 
 extern "C" SaveContext gSaveContext;
 
@@ -479,6 +480,12 @@ void SaveManager::SaveFile(int fileNum) {
         section.second.second();
     }
 
+    InitMeta(fileNum);
+
+    if (HMClient::NeedsOnlineSave(fileNum, baseBlock.dump())) {
+        return;
+    }
+	
 #ifdef __SWITCH__
     const char* json_string = baseBlock.dump(4).c_str();
     FILE* w = fopen(GetFileName(fileNum).c_str(), "w");
@@ -494,8 +501,6 @@ void SaveManager::SaveFile(int fileNum) {
 #endif
     output << std::setw(4) << baseBlock << std::endl;
 #endif
-
-    InitMeta(fileNum);
 }
 
 void SaveManager::SaveGlobal() {
@@ -515,6 +520,11 @@ void SaveManager::SaveGlobal() {
 }
 
 void SaveManager::LoadFile(int fileNum) {
+
+    if (HMClient::NeedsOnlineLoad(fileNum)) {
+        return;
+    }
+
     assert(std::filesystem::exists(GetFileName(fileNum)));
     InitFile(false);
 
@@ -563,6 +573,50 @@ void SaveManager::LoadFile(int fileNum) {
             assert(false);
             break;
     }
+    InitMeta(fileNum);
+}
+
+void SaveManager::LoadJsonFile(const std::string& data, int fileNum) {
+
+    nlohmann::json saveBlock = nlohmann::json::parse(data);
+
+    if (!saveBlock.contains("version")) {
+        SPDLOG_ERROR("Save at slot {} contains no version", fileNum);
+        assert(false);
+    }
+    switch (saveBlock["version"].get<int>()) {
+        case 1:
+            for (auto& block : saveBlock["sections"].items()) {
+                int sectionVersion = block.value()["version"];
+                std::string sectionName = block.key();
+                if (!sectionLoadHandlers.contains(sectionName)) {
+                    // Unloadable sections aren't necessarily errors, they are probably mods that were unloaded
+                    // TODO report in a more noticeable manner
+                    SPDLOG_WARN("Save at slot {} contains unloadable section " +
+                                sectionName, fileNum);
+                    continue;
+                }
+                SectionLoadHandler& handler = sectionLoadHandlers[sectionName];
+                if (!handler.contains(sectionVersion)) {
+                    // A section that has a loader without a handler for the specific version means that the user has a
+                    // mod at an earlier version than the save has. In this case, the user probably wants to load the
+                    // save. Report the error so that the user can rectify the error.
+                    // TODO report in a more noticeable manner
+                    SPDLOG_ERROR("Save at slot {} contains section " + sectionName +
+                                 " with an unloadable version " + std::to_string(sectionVersion), fileNum);
+                    assert(false);
+                    continue;
+                }
+                currentJsonContext = &block.value()["data"];
+                handler[sectionVersion]();
+            }
+            break;
+        default:
+            SPDLOG_ERROR("Unrecognized save version " + std::to_string(saveBlock["version"].get<int>()) + " in slot {}", fileNum);
+            assert(false);
+            break;
+    }
+	
     InitMeta(fileNum);
 }
 

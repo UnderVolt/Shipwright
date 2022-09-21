@@ -9,6 +9,14 @@ public:
     void Init();
     void Save(const AuthSession& auth);
     void FetchData(const bool save = false);
+
+    void BindSave(const std::string& id, int slot);
+    void LoadSave(int slot);
+    void UploadSave(int slot, const std::string& data);
+	
+	static bool NeedsOnlineSave(int slot, const std::string& data);
+    static bool NeedsOnlineLoad(int slot);
+
     void SetMaxSlots(int32_t slots) {
         this->linkedSaves.resize(slots);
         this->maxSlots = slots;

@@ -61,6 +61,7 @@ struct CloudSave {
     GameID game_id;
     std::string game_version;
     std::string rom_version;
+    bool has_data;
     uint32_t version;
     Endianess endianess;
     nlohmann::json metadata;
@@ -104,18 +105,16 @@ void from_json(const json& j, User& user) {
 }
 
 void from_json(const json& j, CloudSave& save) {
-    try {
-        LINK(save, id);
-        LINK(save, name);
-        LINK(save, game_version);
-        LINK(save, rom_version);
-        LINK(save, updated_at);
-        save.game_id = (GameID)(std::find(i_games.begin(), i_games.end(), j["game_id"]) - i_games.begin());
-        save.endianess = (Endianess)(std::find(i_endianess.begin(), i_endianess.end(), j["endianess"]) - i_endianess.begin());
-        LINK(save, blob);
-        LINK(save, md5);
-        LINK(save, metadata);
-    } catch (const std::exception& e) {
-        std::cout << e.what() << std::endl;
-    }
+    LINK(save, id);
+    LINK(save, name);
+    LINK(save, game_version);
+    LINK(save, rom_version);
+    LINK(save, updated_at);
+    LINK(save, has_data);
+    save.game_id = (GameID)(std::find(i_games.begin(), i_games.end(), j["game_id"]) - i_games.begin());
+    save.endianess =
+        (Endianess)(std::find(i_endianess.begin(), i_endianess.end(), j["endianess"]) - i_endianess.begin());
+    LINK(save, blob);
+    LINK(save, md5);
+    LINK(save, metadata);
 }

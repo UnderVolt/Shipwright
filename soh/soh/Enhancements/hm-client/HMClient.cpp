@@ -32,6 +32,13 @@ void HMClient::Init() {
     }
 }
 
+void HMClient::Save(const AuthSession& auth) {
+    json session = auth;
+    std::string data = base64_encode(session.dump());
+    CVar_SetString("gHMAccountData", data.c_str());
+    SohImGui::RequestCvarSaveOnNextTick();
+}
+
 void HMClient::FetchData(const bool save) {
     const Response res = HMApi::GetUser(session);
 
@@ -55,14 +62,105 @@ void HMClient::FetchData(const bool save) {
         return;
     }
 
+    this->saves.clear();
 	this->saves = std::any_cast<std::vector<CloudSave>>(saves.data);
+
+    for (auto& link : this->linkedSaves) {
+        if (std::find_if(this->saves.begin(), this->saves.end(), [link](CloudSave& save) -> bool { return save.id == link.id; }) == this->saves.end()) {
+            link.name = "";
+            link.id = "";
+        }
+    }
 }
 
-void HMClient::Save(const AuthSession& auth) {
-    json session = auth;
-    std::string data = base64_encode(session.dump());
-    CVar_SetString("gHMAccountData", data.c_str());
-    SohImGui::RequestCvarSaveOnNextTick();
+void HMClient::LoadSave(int slot) {
+    SaveManager* sm = SaveManager::Instance;
+    LinkedSave& link = this->linkedSaves.at(slot);
+
+	if (link.id.empty()) {
+        return;
+    }
+	
+    auto save = std::find_if(this->saves.begin(), this->saves.end(),
+                             [link](CloudSave& save) -> bool { return save.id == link.id; });
+
+    if (!save->has_data) {
+        return;
+    }
+
+    const std::string data(save->blob.begin(), save->blob.end());
+    sm->LoadJsonFile(data, slot);
+}
+
+void HMClient::BindSave(const std::string& id, int slot) {
+    SaveManager* sm = SaveManager::Instance;
+    auto save =
+        std::find_if(this->saves.begin(), this->saves.end(), [id](CloudSave& save) -> bool { return save.id == id; });
+
+    if (save == this->saves.end()) {
+        SPDLOG_ERROR("Failed to bind save");
+        return;
+    }
+
+    sm->DeleteZeldaFile(slot);
+
+    if (save->has_data) {
+        this->LoadSave(slot);
+        return;
+    }
+}
+
+void HMClient::UploadSave(int slot, const std::string& data) {
+    const SaveManager* sm = SaveManager::Instance;
+    LinkedSave& currentSave = this->GetLinkedSaves().at(slot);
+	
+    auto save = std::find_if(this->saves.begin(), this->saves.end(),
+                             [currentSave](CloudSave& save) -> bool { return save.id == currentSave.id; });
+
+    if (save == this->saves.end()) {
+        SPDLOG_ERROR("Failed to find save");
+        return;
+    }
+
+#if (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || defined(__BIG_ENDIAN__)
+    Endianess endian = Endianess::BIG;
+#else
+    Endianess little = Endianess::LITTLE;
+#endif
+
+    const Response res = HMApi::UploadSave(this->session, currentSave.name, data, GameID::OOT, ROM_VERSION,
+                                           std::string((char*)gBuildVersion), 1, little, currentSave.id);
+
+    if (res.code != ResponseCodes::OK) {
+        SPDLOG_ERROR(res.error);
+        return;
+    }
+
+    SPDLOG_INFO("Successfully uploaded save!");
+}
+
+bool HMClient::NeedsOnlineSave(int slot, const std::string& data) {
+    HMClient* instance = HMClient::Instance;
+    LinkedSave& currentSave = instance->GetLinkedSaves().at(slot);
+	
+	if (!currentSave.id.empty()) {
+        instance->UploadSave(slot, data);
+        return true;
+    }
+
+    return false;
+}
+
+bool HMClient::NeedsOnlineLoad(int slot) {
+    HMClient* instance = HMClient::Instance;
+    LinkedSave& currentSave = instance->GetLinkedSaves().at(slot);
+
+    if (!currentSave.id.empty()) {
+        instance->LoadSave(slot);
+        return true;
+    }
+
+    return false;
 }
 
 void DrawLinkDeviceUI() {
@@ -121,7 +219,7 @@ void DrawSlotSelector(size_t slot) {
 
     LinkedSave& currentSave = linkedSaves.at(slot);
 
-    ImGui::SetNextItemWidth(100);
+    ImGui::SetNextItemWidth(150);
     if (ImGui::BeginCombo(StringHelper::Sprintf("##hmslot%d", slot).c_str(), currentSave.name.empty() ? "[None]" : currentSave.name.c_str())) {
         if (!saves.empty()) {
             for (size_t slotId = 0; slotId < saves.size(); slotId++) {
@@ -131,12 +229,18 @@ void DrawSlotSelector(size_t slot) {
                 if (ImGui::Selectable(save.name.c_str(), is_selected)) {
                     currentSave.id = save.id;
                     currentSave.name = save.name;
+                    instance->BindSave(currentSave.id, slot);
                 }
             }	
         }
 
+        if (ImGui::Selectable("[None]", currentSave.name.empty())) {
+            currentSave.id   = "";
+            currentSave.name = "";
+        }
+		
         if (saves.size() < user->slots && ImGui::Selectable("[New Save]", false)) {
-            std::string saveName = std::string(nameInputBuffer);
+            std::string saveName = StringHelper::Sprintf("TemporalName[%d]", saves.size());
             const Response res = HMApi::NewSave(instance->GetSession(), saveName, GameID::OOT, ROM_VERSION,
                                                 std::string((char*)gBuildVersion), 1.0);
 
@@ -153,7 +257,18 @@ void DrawSlotSelector(size_t slot) {
     }
     if (!currentSave.id.empty()) {
         ImGui::SameLine();
-        ImGui::Button("Delete");
+        if (ImGui::Button("Delete")) {
+
+            const Response res = HMApi::DeleteSave(instance->GetSession(), currentSave.id);
+            if (res.code != ResponseCodes::OK) {
+                SPDLOG_ERROR(res.error);
+            } else {
+                std::erase_if(saves, [currentSave](const CloudSave& save) { return save.id == currentSave.id; });
+                currentSave.id = "";
+                currentSave.name = "";
+                SPDLOG_INFO("Successfully removed device!");
+            }
+        }
     }
 }
 
@@ -166,7 +281,9 @@ void DrawManagerUI(const User* user) {
     for (size_t slot = 0; slot < instance->GetMaxSlots(); slot++) {
         DrawSlotSelector(slot);   
     }
-
+    if (ImGui::Button("Refresh")) {
+        instance->FetchData();
+    }
 }
 
 void DrawHMGui(bool& open) {

@@ -41,6 +41,7 @@ public:
     void SaveFile(int fileNum);
     void SaveGlobal();
     void LoadFile(int fileNum);
+    void LoadJsonFile(const std::string& data, int slot);
     bool SaveFile_Exist(int fileNum);
 
     // Adds a function that is called when we are intializing a save, including when we are loading a save.
@@ -69,11 +70,11 @@ public:
             (*currentJsonContext)[name.c_str()] = data;
         }
     }
-    
+
     // In the SaveArrayFunc func, the name must be "" to save to the array.
     using SaveArrayFunc = std::function<void(size_t)>;
     void SaveArray(const std::string& name, const size_t size, SaveArrayFunc func);
-    
+
     using SaveStructFunc = std::function<void()>;
     void SaveStruct(const std::string& name, SaveStructFunc func);
 

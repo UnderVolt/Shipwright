@@ -93,9 +93,12 @@ Response HMApi::NewSave(const AuthSession& auth, const std::string& name, GameID
 }
 
 Response HMApi::UploadSave(const AuthSession & auth, const std::string & name, const std::string & blob, GameID game_id, const std::string & rom_version, const std::string & game_version, int32_t version, Endianess endianess, const std::string& id) {
+    
+    std::vector<uint8_t> rawBlob(blob.begin(), blob.end());
+	
     json body = {
         { "name", name },
-        { "blob", blob },
+        { "blob", rawBlob },
         { "game_id", i_games.at(game_id) },
         { "version", version },
         { "endianess", i_endianess.at(endianess) },
@@ -103,7 +106,7 @@ Response HMApi::UploadSave(const AuthSession & auth, const std::string & name, c
         { "game_version", game_version },
     };
 
-    cpr::Response r = cpr::Post(
+    cpr::Response r = cpr::Put(
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id },
         cpr::Header{
             { "authorization", "Auth " + auth.access_token },
