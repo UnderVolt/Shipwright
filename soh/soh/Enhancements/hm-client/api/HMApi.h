@@ -8,11 +8,7 @@ using json = nlohmann::json;
 #ifdef NDEBUG
 #define HM_ENDPOINT "https://api.shipofharkinian.com"
 #else
-#ifdef __SWITCH__
-#define HM_ENDPOINT "http://unsafe.shipofharkinian.com"
-#else
 #define HM_ENDPOINT "https://dev.shipofharkinian.com"
-#endif
 #endif
 
 class HMApi {

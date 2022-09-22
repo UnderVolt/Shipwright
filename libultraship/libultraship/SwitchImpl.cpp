@@ -32,6 +32,7 @@ void Ship::Switch::Init(SwitchPhase phase){
             socketInitializeDefault();
             nxlinkStdio();
         #endif
+            setsysInitialize();
             appletSetGamePlayRecordingState(true);
             appletHook(&applet_hook_cookie, on_applet_hook, NULL);
             appletSetFocusHandlingMode(AppletFocusHandlingMode_NoSuspend);
@@ -47,6 +48,7 @@ void Ship::Switch::Exit(){
     socketExit();
 #endif
     clkrstExit();
+    setsysExit();
     appletSetGamePlayRecordingState(false);
 }
 
@@ -206,18 +208,16 @@ void DetectAppletMode() {
     , RandomTexts[rand() % 25]);
 }
 
-std::string Ship::Switch::GetSwitchVersion(){
-    SetSysSerialNumber serial;
-    setsysGetSerialNumber(&serial);
-
-    return StringHelper::Sprintf(hosversionIsAtmosphere() ? "Atmosphere %d - %s" : "HOS %d - %s", hosversionGet(), serial.number);
+char* Ship::Switch::GetSwitchVersion(){
+    static char buffer[64];
+    sprintf(buffer, hosversionIsAtmosphere() ? "Atmosphere %d" : "HOS %d", hosversionGet());
+    return buffer;
 }
 
-std::string Ship::Switch::GetSwitchHWID(){
-    Uuid uuid;
-    setsysGetExternalSteadyClockSourceId(&uuid);
-
-    return std::string((char*) uuid.uuid);
+char* Ship::Switch::GetSwitchHWID(){
+    static SetSysSerialNumber serial;
+    setsysGetSerialNumber(&serial);
+    return serial.number;
 }
 
 void Ship::Switch::ThrowMissingOTR(std::string OTRPath){

@@ -251,9 +251,8 @@ void DrawLinkDeviceUI() {
         const std::string hwid = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(hwInfo.szHwProfileGuid);
 #elif defined(__SWITCH__)
         DeviceType type = DeviceType::SWITCH;
-        std::string version = "Atmosphere";// Ship::Switch::GetSwitchVersion();
-        std::string hwid    = "1.0"; // Ship::Switch::GetSwitchHWID();
-
+        std::string version = std::string(Ship::Switch::GetSwitchVersion());
+        std::string hwid    = std::string(Ship::Switch::GetSwitchHWID());
 #elif defined(__linux__)
         DeviceType type = DeviceType::LINUX;
 #elif defined(__APPLE__)
@@ -415,6 +414,7 @@ void DrawManagerUI(const User* user) {
 	if (ImGui::Button("Disconnect")) {
         CVar_SetString("gHMAccountData", "None");
         instance->Disconnect();
+        SohImGui::RequestCvarSaveOnNextTick();
     }
 
 	if (!canSwapSave) {
