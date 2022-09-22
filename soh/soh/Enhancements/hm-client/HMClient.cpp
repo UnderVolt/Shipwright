@@ -454,7 +454,7 @@ void DrawNewSaveUI(){
         ImGui::InputTextWithHint("##hmname", "Save name", nameInputBuffer, NAME_BUFFER_SIZE);
         ImGui::Dummy(ImVec2(0, 9));
 
-        size_t nameLength = strlen(nameInputBuffer);
+        size_t nameLength = strnlen(nameInputBuffer, NAME_BUFFER_SIZE);
 
         if (ImGui::Button("New Save") && nameLength >= 3 && nameLength < NAME_BUFFER_SIZE) {
 
