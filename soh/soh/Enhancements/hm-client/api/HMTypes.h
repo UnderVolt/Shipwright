@@ -78,10 +78,10 @@ static std::vector<std::string> i_endianess = { "big", "little", "none" };
 #define LINK(type, key) j.at(#key).get_to(type.key)
 #define CNV(type, key) { #key, type.key }
 
+void to_json(json& j, const LinkedSave& save);
 void to_json(json& j, const AuthSession& auth);
 void from_json(const json& j, AuthSession& auth);
 void from_json(const json& j, User& user);
 void from_json(const json& j, CloudSave& save);
-void to_json(json& j, const LinkedSave& save);
 void from_json(const json& j, LinkedSave& save);
 #endif

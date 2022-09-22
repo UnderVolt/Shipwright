@@ -21,11 +21,16 @@
 #elif __linux__
 #include <sys/utsname.h>
 #include <cstdio>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <cstring>
 #elif __APPLE__
 #include <cstdio>
 #include <uuid/uuid.h>
 #include <cerrno>
-#include <cunistd>
+#include <unistd.>
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #endif
@@ -57,7 +62,7 @@ void HMClient::Init() {
         this->session = json::parse(data).get<AuthSession>();
         this->FetchData();
     }
-	
+
 	CVar* svar = CVar_Get("gHMSavesData");
     if (svar != nullptr && strcmp(svar->value.valueStr, "None") != 0) {
 		if(this->saves.empty()){
@@ -326,23 +331,43 @@ void DrawLinkDeviceUI() {
         struct utsname info;
         uname(&info);
 
-        std::array<char, 128> buffer;
-        std::string raw;
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("ip -o link show | cut -d ' ' -f 2,20 | grep \"$(ip route show | grep default | cut -d ' ' -f 5)\"", "r"), pclose);
-        if (!pipe) {
-            throw std::runtime_error("popen() failed!");
-        }
-        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-            raw += buffer.data();
+        struct ifreq ifr;
+        struct ifconf ifc;
+        char buf[1024];
+        char macBuf[32] = { 0 };
+        int success = 0;
+
+        int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+        if (sock == -1) { /* handle error*/ };
+
+        ifc.ifc_len = sizeof(buf);
+        ifc.ifc_buf = buf;
+        if (ioctl(sock, SIOCGIFCONF, &ifc) == -1) { /* handle error */ }
+
+        struct ifreq* it = ifc.ifc_req;
+        const struct ifreq* const end = it + (ifc.ifc_len / sizeof(struct ifreq));
+
+        for (; it != end; ++it) {
+            strcpy(ifr.ifr_name, it->ifr_name);
+            if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
+                if (! (ifr.ifr_flags & IFF_LOOPBACK)) { // don't count loopback
+                    if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) {
+                        success = 1;
+                        break;
+                    }
+                }
+            }
+            else { /* handle error */ }
         }
 
-        std::vector<std::string> rawInfo = StringHelper::Split(raw.substr(0, raw.length() - 2), ": ");
+        unsigned char mac[6];
 
-        if(rawInfo.size() < 2) {
-            return;
-        }
+	    if (success)
+            memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
 
-        std::string hwid    = rawInfo[1];
+        sprintf(macBuf, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+        std::string hwid    = std::string(macBuf);
         std::string version = StringHelper::Sprintf("%s %s %s", info.sysname, info.machine, info.release);
 #elif defined(__APPLE__)
         DeviceType type = DeviceType::MAC;

@@ -225,6 +225,10 @@ Response HMApi::UnlockAllSaves(const AuthSession& auth) {
     return Response{ ResponseCodes::OK };
 }
 
+void to_json(json& j, const LinkedSave& save) {
+    j = json{ CNV(save, id), CNV(save, name) };
+}
+
 void to_json(json& j, const AuthSession& auth) {
     j = json{ CNV(auth, access_token), CNV(auth, refresh_token), CNV(auth, expires_in) };
 }
@@ -260,9 +264,6 @@ void from_json(const json& j, CloudSave& save) {
     LINK(save, blob);
     LINK(save, md5);
     LINK(save, metadata);
-}
-void to_json(json& j, const LinkedSave& save) {
-    j = json{ CNV(save, id), CNV(save, name) };
 }
 
 void from_json(const json& j, LinkedSave& save) {
