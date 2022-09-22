@@ -19,7 +19,7 @@ public:
     void UploadSave(int slot, const std::string& data);
     void SetLockSave(int slot, bool status);
 
-	static bool NeedsOnlineSave(int slot, const std::string& data);
+    static bool NeedsOnlineSave(int slot, const std::string& data);
     static bool NeedsOnlineLoad(int slot);
 
     void SetMaxSlots(int32_t slots) {

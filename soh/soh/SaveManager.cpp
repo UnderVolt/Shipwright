@@ -1302,6 +1302,7 @@ void SaveManager::DeleteZeldaFile(int fileNum) {
 }
 
 void SaveManager::ClearZeldaFile(int fileNum) {
+    if(fileNum < 0 || fileNum >= MaxFiles) return;
     fileMetaInfo[fileNum].valid = false;
     fileMetaInfo[fileNum].randoSave = false;
 }

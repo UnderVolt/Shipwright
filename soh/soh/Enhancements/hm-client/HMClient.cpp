@@ -11,6 +11,7 @@
 #include <codecvt>
 #include "../../SaveManager.h"
 #include <libultraship/Hooks.h>
+#include <cstring>
 
 #ifdef _WIN32
 #define NOGDI
@@ -75,7 +76,7 @@ void HMClient::FetchData(const bool save) {
         this->Save(session);
     }
 
-	HMApi::UnlockAllSaves(this->session);
+    HMApi::UnlockAllSaves(this->session);
 
     const Response saves = HMApi::ListSaves(this->session, GameID::OOT, ROM_VERSION);
 
@@ -85,7 +86,7 @@ void HMClient::FetchData(const bool save) {
     }
 
     this->saves.clear();
-	this->saves = std::any_cast<std::vector<CloudSave>>(saves.data);
+    this->saves = std::any_cast<std::vector<CloudSave>>(saves.data);
 
     for (auto& link : this->linkedSaves) {
         if (std::find_if(this->saves.begin(), this->saves.end(), [link](CloudSave& save) -> bool { return save.id == link.id; }) == this->saves.end()) {
@@ -99,7 +100,7 @@ void HMClient::LoadSave(int slot) {
     SaveManager* sm = SaveManager::Instance;
     LinkedSave& link = this->linkedSaves.at(slot);
 
-	if (link.id.empty()) {
+    if (link.id.empty()) {
         return;
     }
 
@@ -244,7 +245,7 @@ bool HMClient::NeedsOnlineSave(int slot, const std::string& data) {
     HMClient* instance = HMClient::Instance;
     LinkedSave& currentSave = instance->GetLinkedSaves().at(slot);
 
-	if (!currentSave.id.empty()) {
+    if (!currentSave.id.empty()) {
         instance->UploadSave(slot, data);
         return true;
     }
@@ -387,7 +388,7 @@ void DrawSlotSelector(size_t slot) {
                 if (linkedSaveQuery != linkedSaves.end())
                     continue;
 
-				bool canSwapSave = save.player.empty() || save.player == instance->GetSession().access_token;
+                bool canSwapSave = save.player.empty() || save.player == instance->GetSession().access_token;
 
                 if (!canSwapSave) {
                     ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);

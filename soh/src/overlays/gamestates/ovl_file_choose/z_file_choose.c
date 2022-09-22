@@ -1862,7 +1862,7 @@ void FileChoose_FadeMainToSelect(GameState* thisx) {
  * Update function for `SM_FADE_MAIN_TO_SELECT`
  */
 void FileChoose_SetupFileSlot(s16 slot) {
-    if (fileChooseContext != NULL)
+    if (slot >= 0 && slot < 3 && fileChooseContext != NULL)
         fileChooseContext->nameAlpha[slot] = 0xFF;
 }
 
