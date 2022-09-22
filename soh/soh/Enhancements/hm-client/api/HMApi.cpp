@@ -18,8 +18,6 @@ Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::stri
         cpr::Body{body.dump()}
     );
 
-    printf("Code: %d - Text: %s\n", r.status_code, r.text.c_str());
-
     if (r.status_code != ResponseCodes::OK) {
         json j = json::parse(r.text);
         return { (ResponseCodes) r.status_code, j["error"] };

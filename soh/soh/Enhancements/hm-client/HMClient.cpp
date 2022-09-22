@@ -254,8 +254,6 @@ void DrawLinkDeviceUI() {
         std::string version = "Atmosphere";// Ship::Switch::GetSwitchVersion();
         std::string hwid    = "1.0"; // Ship::Switch::GetSwitchHWID();
 
-        printf("Data: %s %s\n", hwid.c_str(), version.c_str());
-
 #elif defined(__linux__)
         DeviceType type = DeviceType::LINUX;
 #elif defined(__APPLE__)
@@ -293,8 +291,6 @@ void DrawLinkDeviceUI() {
 
         const Response res =
             HMApi::LinkDevice(atoi(inputBuffer), type, version, GameID::OOT, std::string((char*)gBuildVersion), hwid);
-
-        printf("Response: %d\n", res.code);
 
         if (res.code != ResponseCodes::OK) {
             SPDLOG_ERROR(res.error);
