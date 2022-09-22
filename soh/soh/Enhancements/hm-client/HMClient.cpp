@@ -24,6 +24,7 @@
 #include <libultraship/Lib/ImGui/imgui_internal.h>
 
 #define CODE_BUFFER_SIZE 6 + 1
+#define NAME_BUFFER_SIZE 32 + 1
 #define ROM_VERSION "Vanilla"
 
 extern "C" {
@@ -37,7 +38,7 @@ extern GlobalContext* gGlobalCtx;
 
 using json = nlohmann::json;
 char inputBuffer[CODE_BUFFER_SIZE] = "";
-char nameInputBuffer[CODE_BUFFER_SIZE] = "";
+char nameInputBuffer[NAME_BUFFER_SIZE] = "";
 
 bool canEditSaves = true;
 
@@ -62,6 +63,7 @@ void HMClient::FetchData(const bool save) {
 
     if (res.code != ResponseCodes::OK) {
         SPDLOG_ERROR(res.error);
+        this->Disconnect();
         return;
     }
 
@@ -122,6 +124,25 @@ void HMClient::BindSave(const std::string& id, int slot) {
         return;
     }
 
+    const Response res = HMApi::GetSaveLock(this->GetSession(), save->id);
+
+    if (res.code != ResponseCodes::OK) {
+        SPDLOG_ERROR(res.error);
+        return;
+    }
+
+    bool canLoad = std::any_cast<bool>(res.data);
+    LinkedSave& currentSave = linkedSaves.at(slot);
+
+    if (canLoad) {
+        SohImGui::GetGameOverlay()->TextDrawNotification(15.0f, true, "You can't load a locked save");
+        currentSave.id = "";
+        currentSave.name = "";
+        save->player = "[Blocked]";
+        this->ResetSave(slot);
+        return;
+    }
+
     sm->DeleteZeldaFile(slot);
 
     if (save->has_data) {
@@ -174,6 +195,7 @@ void HMClient::UploadSave(int slot, const std::string& data) {
 
     if (res.code != ResponseCodes::OK) {
         SPDLOG_ERROR(res.error);
+        SohImGui::GetGameOverlay()->TextDrawNotification(15.0f, true, "Failed to upload the save, you are in offline mode");
         return;
     }
 
@@ -181,6 +203,7 @@ void HMClient::UploadSave(int slot, const std::string& data) {
 }
 
 bool HMClient::CanLoadSave(int slot) {
+    Ship::GameOverlay* overlay = SohImGui::GetGameOverlay();
 
     LinkedSave& currentSave = this->GetLinkedSaves().at(slot);
 
@@ -196,12 +219,17 @@ bool HMClient::CanLoadSave(int slot) {
 
     if (save == this->saves.end()) {
         SPDLOG_ERROR("Failed to find save");
+        overlay->TextDrawNotification(15.0f, true, "Failed to load %s cloud save", currentSave.name.c_str());
+        currentSave.id = "";
+        currentSave.name = "";
+        this->ResetSave(slot);
         return false;
     }
 
     bool canLoad = std::any_cast<bool>(res.data);
 
     if (canLoad) {
+        overlay->TextDrawNotification(15.0f, true, "You can't load a locked save");
         currentSave.id = "";
         currentSave.name = "";
         save->player = "[Blocked]";
@@ -237,6 +265,9 @@ bool HMClient::NeedsOnlineLoad(int slot) {
 }
 
 void DrawLinkDeviceUI() {
+
+    Ship::GameOverlay* overlay = SohImGui::GetGameOverlay();
+
     ImGui::Text("Welcome!");
     ImGui::Text("Enter the code that appears on your screen.");
     ImGui::Dummy(ImVec2(0, 10));
@@ -317,6 +348,7 @@ void DrawLinkDeviceUI() {
 
         if (res.code != ResponseCodes::OK) {
             SPDLOG_ERROR(res.error);
+            overlay->TextDrawNotification(15.0f, true, "Failed to link your device");
         } else {
             HMClient* instance = HMClient::Instance;
             instance->SetSession(std::any_cast<AuthSession>(res.data));
@@ -326,6 +358,9 @@ void DrawLinkDeviceUI() {
         }
     }
 }
+
+int selectedSlot = -1;
+bool launchPopUp = false;
 
 void DrawSlotSelector(size_t slot) {
     HMClient* instance = HMClient::Instance;
@@ -379,18 +414,8 @@ void DrawSlotSelector(size_t slot) {
         }
 
         if (saves.size() < user->slots && ImGui::Selectable("[New Save]", false)) {
-            std::string saveName = StringHelper::Sprintf("TemporalName[%d]", saves.size());
-            const Response res = HMApi::NewSave(instance->GetSession(), saveName, GameID::OOT, ROM_VERSION,
-                                                std::string((char*)gBuildVersion), 1.0);
-
-            if (res.code != ResponseCodes::OK) {
-                SPDLOG_ERROR(res.error);
-            } else {
-                std::string saveId = std::any_cast<std::string>(res.data);
-                currentSave.id = saveId;
-                currentSave.name = saveName;
-                saves.push_back({ .id = saveId, .name = saveName });
-            }
+            selectedSlot = slot;
+            launchPopUp = true;
         }
         ImGui::EndCombo();
     }
@@ -412,6 +437,57 @@ void DrawSlotSelector(size_t slot) {
     }
 }
 
+void DrawNewSaveUI(){
+
+    if(launchPopUp){
+        ImGui::OpenPopup("New Cloud Save");
+        launchPopUp = false;
+    }
+
+    if (ImGui::BeginPopupModal("New Cloud Save", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize)) {
+
+        HMClient* instance = HMClient::Instance;
+        Ship::GameOverlay* overlay = SohImGui::GetGameOverlay();
+
+        ImGui::Text("Lets create a new save!");
+        ImGui::Dummy(ImVec2(0, 9));
+        ImGui::InputTextWithHint("##hmname", "Save name", nameInputBuffer, NAME_BUFFER_SIZE);
+        ImGui::Dummy(ImVec2(0, 9));
+
+        size_t nameLength = strlen(nameInputBuffer);
+
+        if (ImGui::Button("New Save") && nameLength >= 3 && nameLength < NAME_BUFFER_SIZE) {
+
+            LinkedSave& currentSave = instance->GetLinkedSaves().at(selectedSlot);
+            std::string saveName(nameInputBuffer);
+            const Response res = HMApi::NewSave(instance->GetSession(), saveName, GameID::OOT, ROM_VERSION,
+                                                std::string((char*)gBuildVersion), 1.0);
+
+            if (res.code != ResponseCodes::OK) {
+                SPDLOG_ERROR(res.error);
+                overlay->TextDrawNotification(15.0f, true, "Failed to create a new save");
+            } else {
+                std::string saveId = std::any_cast<std::string>(res.data);
+                currentSave.id = saveId;
+                currentSave.name = saveName;
+                instance->GetSaves().push_back({ .id = saveId, .name = saveName });
+            }
+
+            ImGui::CloseCurrentPopup();
+            selectedSlot = -1;
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Cancel##hmcancel")){
+            ImGui::CloseCurrentPopup();
+            selectedSlot = -1;
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
 void DrawManagerUI(const User* user) {
     HMClient* instance = HMClient::Instance;
     ImGui::Text("Welcome %s!", user->user.c_str());
@@ -425,6 +501,8 @@ void DrawManagerUI(const User* user) {
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
     }
+
+    DrawNewSaveUI();
 
     for (size_t slot = 0; slot < instance->GetMaxSlots(); slot++) {
         DrawSlotSelector(slot);

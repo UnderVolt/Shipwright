@@ -19,8 +19,8 @@ Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::stri
     );
 
     if (r.status_code != ResponseCodes::OK) {
-        json j = json::parse(r.text);
-        return { (ResponseCodes) r.status_code, j["error"] };
+        bool isJson = r.header["Content-Type"] == "application/json";
+        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
     }
 
     json j = json::parse(r.text);
@@ -34,8 +34,8 @@ Response HMApi::UnlinkDevice(const AuthSession& auth) {
     );
 
     if (r.status_code != ResponseCodes::OK) {
-        json j = json::parse(r.text);
-        return { (ResponseCodes)r.status_code, j["error"] };
+        bool isJson = r.header["Content-Type"] == "application/json";
+        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
     }
 
     return Response{ ResponseCodes::OK };
@@ -50,8 +50,8 @@ Response HMApi::GetUser(const AuthSession & auth) {
     );
 
     if (r.status_code != ResponseCodes::OK) {
-        json j = json::parse(r.text);
-        return { (ResponseCodes) r.status_code, j["error"] };
+        bool isJson = r.header["Content-Type"] == "application/json";
+        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
     }
 
     json j = json::parse(r.text);
@@ -70,8 +70,8 @@ Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::s
     );
 
     if (r.status_code != ResponseCodes::OK) {
-        json j = json::parse(r.text);
-        return { (ResponseCodes)r.status_code, j["error"] };
+        bool isJson = r.header["Content-Type"] == "application/json";
+        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
     }
 
     json jobj = json::parse(r.text);
@@ -98,8 +98,8 @@ Response HMApi::NewSave(const AuthSession& auth, const std::string& name, GameID
     );
 
     if (r.status_code != ResponseCodes::OK) {
-        json j = json::parse(r.text);
-        return { (ResponseCodes)r.status_code, j["error"] };
+        bool isJson = r.header["Content-Type"] == "application/json";
+        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
     }
 
     return Response{ ResponseCodes::OK, "NONE", r.text };
@@ -129,8 +129,8 @@ Response HMApi::UploadSave(const AuthSession & auth, const std::string & name, c
     );
 
     if (r.status_code != ResponseCodes::OK) {
-        json j = json::parse(r.text);
-        return { (ResponseCodes) r.status_code, j["error"] };
+        bool isJson = r.header["Content-Type"] == "application/json";
+        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
     }
 
     return Response{ ResponseCodes::OK, "NONE", r.text };
@@ -145,8 +145,8 @@ Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
     );
 
     if (r.status_code != ResponseCodes::OK) {
-        json j = json::parse(r.text);
-        return { (ResponseCodes)r.status_code, j["error"] };
+        bool isJson = r.header["Content-Type"] == "application/json";
+        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
     }
 
     json j = json::parse(r.text);
@@ -163,8 +163,8 @@ Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
     );
 
     if (r.status_code != ResponseCodes::OK) {
-        json j = json::parse(r.text);
-        return { (ResponseCodes)r.status_code, j["error"] };
+        bool isJson = r.header["Content-Type"] == "application/json";
+        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
     }
 
     return Response{ ResponseCodes::OK };
@@ -185,8 +185,8 @@ Response HMApi::LockSave(const AuthSession& auth, const std::string& id, const b
     );
 
     if (r.status_code != ResponseCodes::OK) {
-        json j = json::parse(r.text);
-        return { (ResponseCodes) r.status_code, j["error"] };
+        bool isJson = r.header["Content-Type"] == "application/json";
+        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
     }
 
     return Response{ ResponseCodes::OK };
@@ -201,8 +201,8 @@ Response HMApi::GetSaveLock(const AuthSession& auth, const std::string& id) {
     );
 
     if (r.status_code != ResponseCodes::OK) {
-        json j = json::parse(r.text);
-        return { (ResponseCodes)r.status_code, j["error"] };
+        bool isJson = r.header["Content-Type"] == "application/json";
+        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
     }
 
     json j = json::parse(r.text);
