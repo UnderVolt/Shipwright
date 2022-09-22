@@ -6,9 +6,9 @@
 using json = nlohmann::json;
 
 #ifdef NDEBUG
-#define HM_ENDPOINT "https://dev.shipofharkinian.com"
+#define HM_ENDPOINT "https://api.shipofharkinian.com"
 #else
-#define HM_ENDPOINT "http://localhost:4000"
+#define HM_ENDPOINT "https://dev.shipofharkinian.com"
 #endif
 
 class HMApi {

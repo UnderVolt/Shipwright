@@ -621,16 +621,9 @@ void SaveManager::LoadJsonFile(const std::string& data, int fileNum) {
 }
 
 bool SaveManager::SaveFile_Exist(int fileNum) {
-    
-    try {
-        std::filesystem::exists(GetFileName(fileNum));
-        printf("File[%d] - exist \n",fileNum);
-        return true;
-    }
-    catch(std::filesystem::filesystem_error const& ex) {
-        printf("File[%d] - do not exist \n",fileNum);
-        return false;
-    }
+    bool exists = std::filesystem::exists(GetFileName(fileNum));
+    printf("File[%d] - exist \n", fileNum);
+    return exists;
 }
 
 void SaveManager::AddInitFunction(InitFunc func) {
@@ -1264,6 +1257,11 @@ void SaveManager::DeleteZeldaFile(int fileNum) {
     if (std::filesystem::exists(GetFileName(fileNum))) {
         std::filesystem::remove(GetFileName(fileNum));
     }
+    fileMetaInfo[fileNum].valid = false;
+    fileMetaInfo[fileNum].randoSave = false;
+}
+
+void SaveManager::ClearZeldaFile(int fileNum) {
     fileMetaInfo[fileNum].valid = false;
     fileMetaInfo[fileNum].randoSave = false;
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef __cplusplus
+
 #include <vector>
 #include "api/HMTypes.h"
 
@@ -12,8 +14,9 @@ public:
 
     void BindSave(const std::string& id, int slot);
     void LoadSave(int slot);
+    void ResetSave(int slot);
     void UploadSave(int slot, const std::string& data);
-	
+
 	static bool NeedsOnlineSave(int slot, const std::string& data);
     static bool NeedsOnlineLoad(int slot);
 
@@ -43,18 +46,19 @@ public:
         return this->saves;
     }
  private:
-    size_t maxSlots; 
+    size_t maxSlots;
     User* user;
     AuthSession session;
     std::vector<CloudSave> saves;
     std::vector<LinkedSave> linkedSaves;
 };
 
-#ifdef __cplusplus
 extern "C" {
 #endif
 
 void HMClient_Init(void);
+void HMClient_SetEditEnabled(bool enabled);
+bool HMClient_IsOnlineSave(int slot);
 
 #ifdef __cplusplus
 }

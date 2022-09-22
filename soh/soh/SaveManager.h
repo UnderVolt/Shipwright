@@ -42,6 +42,7 @@ public:
     void SaveGlobal();
     void LoadFile(int fileNum);
     void LoadJsonFile(const std::string& data, int slot);
+    void InitMeta(int slotNum);
     bool SaveFile_Exist(int fileNum);
 
     // Adds a function that is called when we are intializing a save, including when we are loading a save.
@@ -58,6 +59,7 @@ public:
 
     void CopyZeldaFile(int from, int to);
     void DeleteZeldaFile(int fileNum);
+    void ClearZeldaFile(int fileNum);
     bool IsRandoFile();
 
     // Use a name of "" to save to an array. You must be in a SaveArray callback.
@@ -110,7 +112,6 @@ public:
     void ConvertFromUnversioned();
     void CreateDefaultGlobal();
 
-    void InitMeta(int slotNum);
     static void InitFileImpl(bool isDebug);
     static void InitFileNormal();
     static void InitFileDebug();

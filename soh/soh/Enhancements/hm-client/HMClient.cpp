@@ -15,13 +15,24 @@
 #define NOGDI
 #include <windows.h>
 #endif
+#include <libultraship/Lib/ImGui/imgui_internal.h>
 
 #define CODE_BUFFER_SIZE 6 + 1
 #define ROM_VERSION "Vanilla"
 
+extern "C" {
+#include <z64.h>
+#include "variables.h"
+#include "functions.h"
+#include "macros.h"
+extern GlobalContext* gGlobalCtx;
+}
+
 using json = nlohmann::json;
 char inputBuffer[CODE_BUFFER_SIZE] = "";
 char nameInputBuffer[CODE_BUFFER_SIZE] = "";
+
+bool canEditSaves = true;
 
 void HMClient::Init() {
     CVar* var = CVar_Get("gHMAccountData");
@@ -90,6 +101,7 @@ void HMClient::LoadSave(int slot) {
 
     const std::string data(save->blob.begin(), save->blob.end());
     sm->LoadJsonFile(data, slot);
+    sm->InitMeta(slot);
 }
 
 void HMClient::BindSave(const std::string& id, int slot) {
@@ -107,6 +119,16 @@ void HMClient::BindSave(const std::string& id, int slot) {
     if (save->has_data) {
         this->LoadSave(slot);
         return;
+    }
+}
+
+void HMClient::ResetSave(int slot) {
+    SaveManager* sm = SaveManager::Instance;
+
+    sm->ClearZeldaFile(slot);
+
+    if (sm->SaveFile_Exist(slot)) {
+        sm->LoadFile(slot);
     }
 }
 
@@ -226,6 +248,12 @@ void DrawSlotSelector(size_t slot) {
                 const CloudSave& save = saves.at(slotId);
 
                 const bool is_selected = save.id == currentSave.id;
+                auto linkedSaveQuery = std::find_if(linkedSaves.begin(), linkedSaves.end(),
+                                                    [save](LinkedSave& link) -> bool { return save.id == link.id; });
+
+                if (linkedSaveQuery != linkedSaves.end())
+                    continue;
+				
                 if (ImGui::Selectable(save.name.c_str(), is_selected)) {
                     currentSave.id = save.id;
                     currentSave.name = save.name;
@@ -237,6 +265,7 @@ void DrawSlotSelector(size_t slot) {
         if (ImGui::Selectable("[None]", currentSave.name.empty())) {
             currentSave.id   = "";
             currentSave.name = "";
+            instance->ResetSave(slot);
         }
 		
         if (saves.size() < user->slots && ImGui::Selectable("[New Save]", false)) {
@@ -257,7 +286,7 @@ void DrawSlotSelector(size_t slot) {
     }
     if (!currentSave.id.empty()) {
         ImGui::SameLine();
-        if (ImGui::Button("Delete")) {
+        if (ImGui::Button(("Delete##" + currentSave.id).c_str())) {
 
             const Response res = HMApi::DeleteSave(instance->GetSession(), currentSave.id);
             if (res.code != ResponseCodes::OK) {
@@ -266,6 +295,7 @@ void DrawSlotSelector(size_t slot) {
                 std::erase_if(saves, [currentSave](const CloudSave& save) { return save.id == currentSave.id; });
                 currentSave.id = "";
                 currentSave.name = "";
+                instance->ResetSave(slot);
                 SPDLOG_INFO("Successfully removed device!");
             }
         }
@@ -278,11 +308,24 @@ void DrawManagerUI(const User* user) {
     ImGui::Dummy(ImVec2(0, 5));
     ImGui::Text("Linked Saves");
     ImGui::Dummy(ImVec2(0, 5));
+
+    bool canSwapSave = gGlobalCtx == nullptr && canEditSaves;
+	
+    if (!canSwapSave) {
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+    }
+	
     for (size_t slot = 0; slot < instance->GetMaxSlots(); slot++) {
         DrawSlotSelector(slot);   
     }
     if (ImGui::Button("Refresh")) {
         instance->FetchData();
+    }
+
+	if (!canSwapSave) {
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
     }
 }
 
@@ -307,7 +350,18 @@ void InitHMClient() {
     SohImGui::AddWindow("Cloud Saves", "HMClient", DrawHMGui);
 }
 
-extern "C" void HMClient_Init(void) {
+extern "C" {
+void HMClient_Init(void) {
     InitHMClient();
     HMClient::Instance->Init();
+}
+
+void HMClient_SetEditEnabled(bool mode) {
+    canEditSaves = mode;
+}
+
+bool HMClient_IsOnlineSave(int slot) {
+    LinkedSave& currentSave = HMClient::Instance->GetLinkedSaves().at(slot);
+    return !currentSave.id.empty();
+}
 }
