@@ -195,7 +195,7 @@ void HMClient::UploadSave(int slot, const std::string& data) {
 
     if (res.code != ResponseCodes::OK) {
         SPDLOG_ERROR(res.error);
-        SohImGui::GetGameOverlay()->TextDrawNotification(15.0f, true, "Failed to upload the save, you are in offline mode");
+        SohImGui::GetGameOverlay()->TextDrawNotification(15.0f, true, "Failed to upload the save you are in offline mode, please try again later");
         return;
     }
 
