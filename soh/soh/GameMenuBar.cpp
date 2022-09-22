@@ -26,6 +26,7 @@
 #include "include/global.h"
 #include "include/z64audio.h"
 #include "soh/SaveManager.h"
+#include "soh/Enhancements/hm-client/HMClient.h"
 
 #define EXPERIMENTAL() \
     ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 50, 50, 255)); \
@@ -951,7 +952,7 @@ namespace GameMenuBar {
                     OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_BLUE_FIRE_ARROWS);
                 const char* forceEnableBlueFireArrowsText =
                     "This setting is forcefully enabled because a savefile\nwith \"Blue Fire Arrows\" is loaded.";
-                UIWidgets::PaddedEnhancementCheckbox("Blue Fire Arrows", "gBlueFireArrows", true, false, 
+                UIWidgets::PaddedEnhancementCheckbox("Blue Fire Arrows", "gBlueFireArrows", true, false,
                     forceEnableBlueFireArrows, forceEnableBlueFireArrowsText, UIWidgets::CheckboxGraphics::Checkmark);
                 UIWidgets::Tooltip("Allows Ice Arrows to melt red ice.\nMay require a room reload if toggled during gameplay.");
 
@@ -960,7 +961,7 @@ namespace GameMenuBar {
                     OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_SUNLIGHT_ARROWS);
                 const char* forceEnableSunLightArrowsText =
                     "This setting is forcefully enabled because a savefile\nwith \"Sunlight Arrows\" is loaded.";
-                UIWidgets::PaddedEnhancementCheckbox("Sunlight Arrows", "gSunlightArrows", true, false, 
+                UIWidgets::PaddedEnhancementCheckbox("Sunlight Arrows", "gSunlightArrows", true, false,
                     forceEnableSunLightArrows, forceEnableSunLightArrowsText, UIWidgets::CheckboxGraphics::Checkmark);
                 UIWidgets::Tooltip("Allows Light Arrows to activate sun switches.\nMay require a room reload if toggled during gameplay.");
 
@@ -1358,7 +1359,10 @@ namespace GameMenuBar {
 
         if(ImGui::BeginMenu("Cloud Saves")) {
             static ImVec2 buttonSize(160.0f, 0.0f);
-            if (ImGui::Button(GetWindowButtonText("Link your Device", CVar_GetS32("gCloudSavesMenu", 0)).c_str(), buttonSize)) {
+            if (ImGui::Button(GetWindowButtonText(HMClient::Instance->IsLoggedIn() ? "Manage your Saves" : "Link your Device",
+                                                  CVar_GetS32("gCloudSavesMenu", 0))
+                                  .c_str(),
+                              buttonSize)) {
                 bool currentValue = CVar_GetS32("gCloudSavesMenu", 0);
                 CVar_SetS32("gCloudSavesMenu", !currentValue);
                 SohImGui::RequestCvarSaveOnNextTick();
@@ -1497,12 +1501,12 @@ namespace GameMenuBar {
                 if (OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_KEYSANITY) > 2 ||
                     OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_GERUDO_KEYS) > 0 ||
                     OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_BOSS_KEYSANITY) > 2 ||
-                    OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_GANONS_BOSS_KEY) > 2 || 
+                    OTRGlobals::Instance->gRandomizer->GetRandoSettingValue(RSK_GANONS_BOSS_KEY) > 2 ||
                     !gSaveContext.n64ddFlag) {
                     disableKeyColors = false;
                 }
 
-                const char* disableKeyColorsText = 
+                const char* disableKeyColorsText =
                     "This setting is disabled because a savefile is loaded without any key\n"
                     "shuffle settings set to \"Any Dungeon\", \"Overworld\" or \"Anywhere\"";
 

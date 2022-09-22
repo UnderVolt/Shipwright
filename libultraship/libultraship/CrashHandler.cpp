@@ -2,6 +2,7 @@
 #include "Utils/StringHelper.h"
 #include "CrashHandler.h"
 #include "Window.h"
+#include "Hooks.h"
 
 extern "C" void DeinitOTR(void);
 
@@ -128,7 +129,7 @@ static void ErrorHandler(int sig, siginfo_t* sigInfo, void* data) {
             pipe = popen(command, "r");
             fgets(addrLine, 128, pipe);
             #endif
-            
+
             functionName = StringHelper::Sprintf("%s (+0x%X)", nameFound,
                                                  (char*)arr[i] - (char*)info.dli_saddr);
             free(demangled);
@@ -139,6 +140,7 @@ static void ErrorHandler(int sig, siginfo_t* sigInfo, void* data) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "SoH has crashed", "SoH Has crashed. Please upload the logs to the support channel in discord.", nullptr);
     free(symbols);
     DeinitOTR();
+    Ship::ExecuteHooks<Ship::GameCrash>();
     Ship::Window::GetInstance()->GetLogger()->flush();
     spdlog::shutdown();
     exit(1);
@@ -340,15 +342,16 @@ static void printStack(CONTEXT* ctx) {
         }
     }
     Ship::Window::GetInstance()->GetLogger()->flush();
+    Ship::ExecuteHooks<Ship::CrashGame>();
     spdlog::shutdown();
     DeinitOTR();
 }
 
 extern "C" LONG seh_filter(struct _EXCEPTION_POINTERS* ex) {
     char exceptionString[20];
-    
+
     snprintf(exceptionString, std::size(exceptionString), "0x%x", ex->ExceptionRecord->ExceptionCode);
-    
+
     SPDLOG_CRITICAL("EXCEPTION {} occurred", exceptionString);
     printStack(ex->ContextRecord);
     MessageBox(nullptr, L"SoH Has crashed. Please upload the logs to the support channel in discord.", L"Crash", MB_OK | MB_ICONERROR);

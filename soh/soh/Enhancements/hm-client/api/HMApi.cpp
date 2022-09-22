@@ -28,6 +28,19 @@ Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::stri
     return Response{ ResponseCodes::OK, "NONE", j.get<AuthSession>() };
 }
 
+Response HMApi::UnlinkDevice(const AuthSession& auth) {
+    cpr::Response r = cpr::Delete(
+        cpr::Url{ HM_ENDPOINT "/api/v1/unlink/" }
+    );
+
+    if (r.status_code != ResponseCodes::OK) {
+        json j = json::parse(r.text);
+        return { (ResponseCodes)r.status_code, j["error"] };
+    }
+
+    return Response{ ResponseCodes::OK };
+}
+
 Response HMApi::GetUser(const AuthSession & auth) {
     cpr::Response r = cpr::Get(
         cpr::Url{ HM_ENDPOINT "/api/v1/auth/me" },
@@ -153,6 +166,57 @@ Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
         json j = json::parse(r.text);
         return { (ResponseCodes)r.status_code, j["error"] };
     }
+
+    return Response{ ResponseCodes::OK };
+}
+
+Response HMApi::LockSave(const AuthSession& auth, const std::string& id, const bool status) {
+    json body = {
+        { "status", status }
+    };
+
+    cpr::Response r = cpr::Put(
+        cpr::Url{ HM_ENDPOINT "/api/v1/saves/status/" + id },
+		cpr::Header{
+            { "authorization", "Auth " + auth.access_token },
+            { "Content-Type", "application/json" }
+        },
+        cpr::Body{body.dump()}
+    );
+
+    if (r.status_code != ResponseCodes::OK) {
+        json j = json::parse(r.text);
+        return { (ResponseCodes) r.status_code, j["error"] };
+    }
+
+    return Response{ ResponseCodes::OK };
+}
+
+Response HMApi::GetSaveLock(const AuthSession& auth, const std::string& id) {
+    cpr::Response r = cpr::Get(
+        cpr::Url{ HM_ENDPOINT "/api/v1/saves/status/" + id },
+        cpr::Header{
+            { "authorization", "Auth " + auth.access_token }
+        }
+    );
+
+    if (r.status_code != ResponseCodes::OK) {
+        json j = json::parse(r.text);
+        return { (ResponseCodes)r.status_code, j["error"] };
+    }
+
+    json j = json::parse(r.text);
+
+    return Response{ ResponseCodes::OK, "NONE", j["locked"].get<bool>() };
+}
+
+Response HMApi::UnlockAllSaves(const AuthSession& auth) {
+    cpr::Response r = cpr::Put(
+        cpr::Url{ HM_ENDPOINT "/api/v1/saves/status/" },
+        cpr::Header{
+            { "authorization", "Auth " + auth.access_token }
+        }
+    );
 
     return Response{ ResponseCodes::OK };
 }

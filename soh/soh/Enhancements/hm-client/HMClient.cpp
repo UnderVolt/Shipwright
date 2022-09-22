@@ -10,6 +10,7 @@
 #include "variables.h"
 #include <codecvt>
 #include "../../SaveManager.h"
+#include <libultraship/Hooks.h>
 
 #ifdef _WIN32
 #define NOGDI
@@ -25,6 +26,7 @@ extern "C" {
 #include "variables.h"
 #include "functions.h"
 #include "macros.h"
+extern "C" void FileChoose_SetupFileSlot(s16 slot);
 extern GlobalContext* gGlobalCtx;
 }
 
@@ -36,7 +38,7 @@ bool canEditSaves = true;
 
 void HMClient::Init() {
     CVar* var = CVar_Get("gHMAccountData");
-    if (var != nullptr) {
+    if (var != nullptr && strcmp(var->value.valueStr, "None") != 0) {
         std::string data = base64_decode(std::string(var->value.valueStr));
         this->session = json::parse(data).get<AuthSession>();
         this->FetchData();
@@ -65,6 +67,8 @@ void HMClient::FetchData(const bool save) {
     if (save) {
         this->Save(session);
     }
+	
+	HMApi::UnlockAllSaves(this->session);
 	
     const Response saves = HMApi::ListSaves(this->session, GameID::OOT, ROM_VERSION);
 
@@ -101,7 +105,6 @@ void HMClient::LoadSave(int slot) {
 
     const std::string data(save->blob.begin(), save->blob.end());
     sm->LoadJsonFile(data, slot);
-    sm->InitMeta(slot);
 }
 
 void HMClient::BindSave(const std::string& id, int slot) {
@@ -118,6 +121,7 @@ void HMClient::BindSave(const std::string& id, int slot) {
 
     if (save->has_data) {
         this->LoadSave(slot);
+        FileChoose_SetupFileSlot(slot);
         return;
     }
 }
@@ -130,6 +134,16 @@ void HMClient::ResetSave(int slot) {
     if (sm->SaveFile_Exist(slot)) {
         sm->LoadFile(slot);
     }
+}
+
+void HMClient::SetLockSave(int slot, bool status) {
+    LinkedSave& currentSave = this->GetLinkedSaves().at(slot);
+
+    if (currentSave.id.empty()) {
+        return;
+    }
+
+    HMApi::LockSave(this->GetSession(), currentSave.id, status);
 }
 
 void HMClient::UploadSave(int slot, const std::string& data) {
@@ -159,6 +173,38 @@ void HMClient::UploadSave(int slot, const std::string& data) {
     }
 
     SPDLOG_INFO("Successfully uploaded save!");
+}
+
+bool HMClient::CanLoadSave(int slot) {
+
+    LinkedSave& currentSave = this->GetLinkedSaves().at(slot);
+	
+    const Response res = HMApi::GetSaveLock(this->GetSession(), currentSave.id);
+
+    if (res.code != ResponseCodes::OK) {
+        SPDLOG_ERROR(res.error);
+        return false;
+    }
+	
+    auto save = std::find_if(this->saves.begin(), this->saves.end(),
+                             [currentSave](CloudSave& save) -> bool { return save.id == currentSave.id; });
+
+    if (save == this->saves.end()) {
+        SPDLOG_ERROR("Failed to find save");
+        return false;
+    }
+
+    bool canLoad = std::any_cast<bool>(res.data);
+
+    if (canLoad) {
+        currentSave.id = "";
+        currentSave.name = "";
+        save->player = "[Blocked]";
+        this->ResetSave(slot);
+        return false;
+    }
+	
+    return true;
 }
 
 bool HMClient::NeedsOnlineSave(int slot, const std::string& data) {
@@ -205,6 +251,31 @@ void DrawLinkDeviceUI() {
         DeviceType type = DeviceType::LINUX;
 #elif defined(__APPLE__)
         DeviceType type = DeviceType::MAC;
+        std::string version;
+        std::string line;
+        std::ifstream file("/System/Library/CoreServices/SystemVersion.plist");
+        if (file.is_open()) {
+            while (getline(file, line)) {
+                if (line.find("<key>ProductVersion</key>") != std::string::npos) {
+                    getline(file, line);
+                    version =
+                        line.substr(line.find("<string>") + 8, line.find("</string>") - line.find("<string>") - 8);
+                    break;
+                }
+            }
+            file.close();
+        }
+        std::string hwid;
+        std::string command = "ioreg -d2 -c IOPlatformExpertDevice | awk -F\\\" '/IOPlatformUUID/{print $(NF-1)}'";
+        FILE* pipe = popen(command.c_str(), "r");
+        if (!pipe)
+            return -1;
+        char buffer[128];
+        while (!feof(pipe)) {
+            if (fgets(buffer, 128, pipe) != NULL)
+                deviceId += buffer;
+        }
+        pclose(pipe);
 #elif defined(__SWITCH__)
         DeviceType type = DeviceType::SWITCH;
         std::string version = StringHelper::Sprintf("OS: %d", GetVersion());
@@ -254,10 +325,22 @@ void DrawSlotSelector(size_t slot) {
                 if (linkedSaveQuery != linkedSaves.end())
                     continue;
 				
-                if (ImGui::Selectable(save.name.c_str(), is_selected)) {
+				bool canSwapSave = save.player.empty() || save.player == instance->GetSession().access_token;
+				
+                if (!canSwapSave) {
+                    ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+                    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+                }
+				
+                if (ImGui::Selectable((canSwapSave ? save.name : (save.name + " [Locked]")).c_str(), is_selected)) {
                     currentSave.id = save.id;
                     currentSave.name = save.name;
                     instance->BindSave(currentSave.id, slot);
+                }
+
+				if (!canSwapSave) {
+                    ImGui::PopItemFlag();
+                    ImGui::PopStyleVar();
                 }
             }	
         }
@@ -323,6 +406,13 @@ void DrawManagerUI(const User* user) {
         instance->FetchData();
     }
 
+    ImGui::SameLine();
+	
+	if (ImGui::Button("Disconnect")) {
+        CVar_SetString("gHMAccountData", "None");
+        instance->Disconnect();
+    }
+
 	if (!canSwapSave) {
         ImGui::PopItemFlag();
         ImGui::PopStyleVar();
@@ -354,6 +444,21 @@ extern "C" {
 void HMClient_Init(void) {
     InitHMClient();
     HMClient::Instance->Init();
+	
+    Ship::RegisterHook<Ship::ExitGame>([] {
+        if (gSaveContext.fileNum > 0 && gSaveContext.fileNum < 3)
+            HMClient::Instance->SetLockSave(gSaveContext.fileNum, false);
+    });
+
+    Ship::RegisterHook<Ship::CrashGame>([] {
+        if (gSaveContext.fileNum > 0 && gSaveContext.fileNum < 3)
+            HMClient::Instance->SetLockSave(gSaveContext.fileNum, false);
+    });
+}
+
+void HMClient_SetLockSave(int slot, bool status) {
+    HMClient* instance = HMClient::Instance;
+    instance->SetLockSave(slot, status);
 }
 
 void HMClient_SetEditEnabled(bool mode) {
@@ -363,5 +468,11 @@ void HMClient_SetEditEnabled(bool mode) {
 bool HMClient_IsOnlineSave(int slot) {
     LinkedSave& currentSave = HMClient::Instance->GetLinkedSaves().at(slot);
     return !currentSave.id.empty();
+}
+
+bool HMClient_CanLoadSave(int slot) {
+    HMClient* instance = HMClient::Instance;
+
+    return instance->CanLoadSave(slot);
 }
 }

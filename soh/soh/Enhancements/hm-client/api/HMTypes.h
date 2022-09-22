@@ -62,6 +62,8 @@ struct CloudSave {
     std::string game_version;
     std::string rom_version;
     bool has_data;
+    std::string player;
+    uint64_t lock_time;
     uint32_t version;
     Endianess endianess;
     nlohmann::json metadata;
@@ -111,6 +113,8 @@ void from_json(const json& j, CloudSave& save) {
     LINK(save, rom_version);
     LINK(save, updated_at);
     LINK(save, has_data);
+    LINK(save, player);
+    LINK(save, lock_time);
     save.game_id = (GameID)(std::find(i_games.begin(), i_games.end(), j["game_id"]) - i_games.begin());
     save.endianess =
         (Endianess)(std::find(i_endianess.begin(), i_endianess.end(), j["endianess"]) - i_endianess.begin());

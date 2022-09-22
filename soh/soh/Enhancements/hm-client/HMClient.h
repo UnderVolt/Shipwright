@@ -15,7 +15,9 @@ public:
     void BindSave(const std::string& id, int slot);
     void LoadSave(int slot);
     void ResetSave(int slot);
+    bool CanLoadSave(int slot);
     void UploadSave(int slot, const std::string& data);
+    void SetLockSave(int slot, bool status);
 
 	static bool NeedsOnlineSave(int slot, const std::string& data);
     static bool NeedsOnlineLoad(int slot);
@@ -33,11 +35,21 @@ public:
     void SetSession(const AuthSession& auth) {
         this->session = auth;
     }
+    void Disconnect() {
+        this->linkedSaves.clear();
+        this->linkedSaves.resize(3);
+        this->saves.clear();
+        this->session = {};
+        this->user = nullptr;
+    }
     const AuthSession& GetSession() {
         return this->session;
     }
     const User* GetUser() {
         return this->user;
+    }
+    const bool IsLoggedIn() {
+        return this->user != nullptr;
     }
     std::vector<LinkedSave>& GetLinkedSaves() {
         return this->linkedSaves;
@@ -57,8 +69,10 @@ extern "C" {
 #endif
 
 void HMClient_Init(void);
+void HMClient_SetLockSave(int slot, bool status);
 void HMClient_SetEditEnabled(bool enabled);
 bool HMClient_IsOnlineSave(int slot);
+bool HMClient_CanLoadSave(int slot);
 
 #ifdef __cplusplus
 }

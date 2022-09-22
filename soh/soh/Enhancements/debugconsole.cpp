@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include "soh/OTRGlobals.h"
+#include "soh/Enhancements/hm-client/HMClient.h"
 
 
 #define Path _Path
@@ -176,7 +177,7 @@ static bool ResetHandler(std::shared_ptr<Ship::Console> Console, std::vector<std
         SohImGui::GetConsole()->SendErrorMessage("GlobalCtx == nullptr");
         return CMD_FAILED;
     }
-
+    HMClient::Instance->SetLockSave(gSaveContext.fileNum, false);
     SET_NEXT_GAMESTATE(&gGlobalCtx->state, TitleSetup_Init, GameState);
     gGlobalCtx->state.running = false;
     return CMD_SUCCESS;

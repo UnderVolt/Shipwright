@@ -12,6 +12,8 @@ static s16 sUnused = 106;
 
 static s16 sScreenFillAlpha = 255;
 
+FileChooseContext* fileChooseContext = NULL;
+
 unsigned char gFileSelRANDButtonTex[] = {
     0x0,  0x0,  0x75, 0x73, 0xfa, 0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7,
     0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7, 0xff, 0xf7, 0xff,
@@ -761,6 +763,9 @@ void FileChoose_UpdateMainMenu(GameState* thisx) {
                 this->nameEntryBoxAlpha = 0;
                 memcpy(Save_GetSaveMetaInfo(this->buttonIndex)->playerName, &emptyName, 8);
             } else {
+                if (HMClient_IsOnlineSave(this->buttonIndex) && !HMClient_CanLoadSave(this->buttonIndex)) {
+                    return;
+                }
                 Audio_PlaySoundGeneral(NA_SE_SY_FSEL_DECIDE_L, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
                 this->actionTimer = 8;
                 this->selectMode = SM_FADE_MAIN_TO_SELECT;
@@ -1328,14 +1333,13 @@ void FileChoose_DrawFileInfo(GameState* thisx, s16 fileIndex, s16 isActive) {
     gDPPipeSync(POLY_OPA_DISP++);
     gDPSetCombineLERP(POLY_OPA_DISP++, 0, 0, 0, PRIMITIVE, TEXEL0, 0, PRIMITIVE, 0, 0, 0, 0, PRIMITIVE, TEXEL0, 0,
                       PRIMITIVE, 0);
-	
-    bool isCloudSave = HMClient_IsOnlineSave(fileIndex);
 
+    fileChooseContext = this;
     // draw file name
-    if (this->nameAlpha[fileIndex] != 0 || isCloudSave) {
+    if (this->nameAlpha[fileIndex] != 0) {
         gSPVertex(POLY_OPA_DISP++, &this->windowContentVtx[D_8081284C[fileIndex]], 32, 0);
         gDPSetPrimColor(POLY_OPA_DISP++, 0x00, 0x00, sNamePrimColors[isActive][0], sNamePrimColors[isActive][1],
-                        sNamePrimColors[isActive][2], isCloudSave ? 0xFF : this->nameAlpha[fileIndex]);
+                        sNamePrimColors[isActive][2], this->nameAlpha[fileIndex]);
 
         for (i = 0, vtxOffset = 0; vtxOffset < 0x20; i++, vtxOffset += 4) {
             FileChoose_DrawCharacter(
@@ -1562,9 +1566,10 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
         }
 
         // draw disk label for 64DD
-        if (isCloudSave) {
+        if (isCloudSave && this->configMode < CM_ROTATE_TO_NAME_ENTRY) {
             gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, color.r, color.g, color.b, this->fileButtonAlpha[i]);
-            FileChoose_DrawTexture(this, isRandoSave ? 276 : 231, 75 + (16 * i), 44, 16, isRandoSave ? gFileSelCLOUDAltButtonTex : gFileSelCLOUDButtonTex);
+            FileChoose_DrawTexture(this, isRandoSave ? 276 : 231, 75 + (16 * i) - (this->buttonYOffsets[i]), 44,
+                                   16, isRandoSave ? gFileSelCLOUDAltButtonTex : gFileSelCLOUDButtonTex);
         }
 
         // draw connectors
@@ -1853,6 +1858,15 @@ void FileChoose_FadeMainToSelect(GameState* thisx) {
 }
 
 /**
+ * Fade out the main menu elements to transition to select mode.
+ * Update function for `SM_FADE_MAIN_TO_SELECT`
+ */
+void FileChoose_SetupFileSlot(s16 slot) {
+    if (fileChooseContext != NULL)
+        fileChooseContext->nameAlpha[slot] = 0xFF;
+}
+
+/**
  * Moves the selected file to the top of the window.
  * Update function for `SM_MOVE_FILE_TO_TOP`
  */
@@ -2023,6 +2037,10 @@ void FileChoose_LoadGame(GameState* thisx) {
     FileChooseContext* this = (FileChooseContext*)thisx;
     u16 swordEquipMask;
     s32 pad;
+
+    if (HMClient_IsOnlineSave(this->buttonIndex)) {
+        HMClient_SetLockSave(this->buttonIndex, true);
+    }
 
     if (this->buttonIndex == FS_BTN_SELECT_FILE_1 && CVar_GetS32("gDebugEnabled", 0)) {
         Audio_PlaySoundGeneral(NA_SE_SY_FSEL_DECIDE_L, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
