@@ -261,3 +261,11 @@ void from_json(const json& j, CloudSave& save) {
     LINK(save, md5);
     LINK(save, metadata);
 }
+void to_json(json& j, const LinkedSave& save) {
+    j = json{ CNV(save, id), CNV(save, name) };
+}
+
+void from_json(const json& j, LinkedSave& save) {
+    LINK(save, id);
+    LINK(save, name);
+}

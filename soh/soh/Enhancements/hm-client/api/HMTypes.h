@@ -82,14 +82,6 @@ void to_json(json& j, const AuthSession& auth);
 void from_json(const json& j, AuthSession& auth);
 void from_json(const json& j, User& user);
 void from_json(const json& j, CloudSave& save);
-
-//void to_json(json& j, const LinkSave& save) {
-//    j = json{ CNV(save, slot), CNV(save, save_id) };
-//}
-
-//void from_json(const json& j, LinkSave& save) {
-//    LINK(save, slot);
-//    LINK(save, save_id);
-//}
-
+void to_json(json& j, const LinkedSave& save);
+void from_json(const json& j, LinkedSave& save);
 #endif

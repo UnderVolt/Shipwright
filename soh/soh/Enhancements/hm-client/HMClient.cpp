@@ -50,12 +50,36 @@ void HMClient::Init() {
         this->session = json::parse(data).get<AuthSession>();
         this->FetchData();
     }
+	
+	CVar* svar = CVar_Get("gHMSavesData");
+    if (svar != nullptr && strcmp(svar->value.valueStr, "None") != 0) {
+		if(this->saves.empty()){
+            return;
+        }
+
+        std::string saveData = base64_decode(std::string(svar->value.valueStr));
+        this->linkedSaves = json::parse(saveData).get<std::vector<LinkedSave>>();
+
+        for (auto& link : this->linkedSaves) {
+            auto save = std::find_if(this->saves.begin(), this->saves.end(),
+                                     [link](CloudSave& save) -> bool { return save.id == link.id; });
+
+            if (save == this->saves.end()) {
+                link.id = "";
+                link.name = "";
+            }
+        }
+    }
 }
 
 void HMClient::Save(const AuthSession& auth) {
     json session = auth;
     std::string data = base64_encode(session.dump());
     CVar_SetString("gHMAccountData", data.c_str());
+
+	json saveData = this->linkedSaves;
+    std::string saves = base64_encode(saveData.dump());
+    CVar_SetString("gHMSavesData", saves.c_str());
     SohImGui::RequestCvarSaveOnNextTick();
 }
 
@@ -143,6 +167,8 @@ void HMClient::BindSave(const std::string& id, int slot) {
         this->ResetSave(slot);
         return;
     }
+
+    this->Save(session);
 
     sm->DeleteZeldaFile(slot);
 
