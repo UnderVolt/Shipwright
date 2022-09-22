@@ -21,6 +21,13 @@
 #elif __linux__
 #include <sys/utsname.h>
 #include <cstdio>
+#elif __APPLE__
+#include <cstdio>
+#include <uuid/uuid.h>
+#include <cerrno>
+#include <cunistd>
+#include <sys/sysctl.h>
+#include <sys/types.h>
 #endif
 #include <libultraship/Lib/ImGui/imgui_internal.h>
 
@@ -339,31 +346,31 @@ void DrawLinkDeviceUI() {
         std::string version = StringHelper::Sprintf("%s %s %s", info.sysname, info.machine, info.release);
 #elif defined(__APPLE__)
         DeviceType type = DeviceType::MAC;
-        std::string version;
-        std::string line;
-        std::ifstream file("/System/Library/CoreServices/SystemVersion.plist");
-        if (file.is_open()) {
-            while (getline(file, line)) {
-                if (line.find("<key>ProductVersion</key>") != std::string::npos) {
-                    getline(file, line);
-                    version =
-                        line.substr(line.find("<string>") + 8, line.find("</string>") - line.find("<string>") - 8);
-                    break;
-                }
+        char str[256];
+        size_t size = sizeof(str);
+        int ret = sysctlbyname("kern.osrelease", str, &size, NULL, 0);
+        printf("%s\n", str);
+
+        // unique machine identifier
+        struct timespec ts = { .tv_sec = 5, .tv_nsec = 0 };
+        uuid_t uuid = {};
+
+        if (gethostuuid(uuid, &ts) == -1) {
+            switch (errno) {
+                case EFAULT:
+                    fputs("Failed to get system UUID: unknown error", stderr);
+                    return 1;
+                case EWOULDBLOCK:
+                    fputs("Failed to get system UUID: timeout expired", stderr);
+                    return 1;
             }
-            file.close();
         }
-        std::string hwid;
-        std::string command = "ioreg -d2 -c IOPlatformExpertDevice | awk -F\\\" '/IOPlatformUUID/{print $(NF-1)}'";
-        FILE* pipe = popen(command.c_str(), "r");
-        if (!pipe)
-            return -1;
-        char buffer[128];
-        while (!feof(pipe)) {
-            if (fgets(buffer, 128, pipe) != NULL)
-                deviceId += buffer;
-        }
-        pclose(pipe);
+
+        uuid_string_t uuid_string;
+        uuid_unparse_upper(uuid, uuid_string);
+
+        std::string version = std::string(str);
+        std::string hwid    = std::string(uuid_string);
 #elif defined(__WIIU__)
         DeviceType type = DeviceType::WII_U;
 #else
