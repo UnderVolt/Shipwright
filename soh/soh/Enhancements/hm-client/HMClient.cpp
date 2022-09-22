@@ -17,6 +17,8 @@
 #include <windows.h>
 #elif __SWITCH__
 #include <libultraship/SwitchImpl.h>
+#elif __linux__
+#include <sys/utsname.h>
 #endif
 #include <libultraship/Lib/ImGui/imgui_internal.h>
 
@@ -248,13 +250,18 @@ void DrawLinkDeviceUI() {
         GetCurrentHwProfile(&hwInfo);
         const DeviceType type = DeviceType::WINDOWS;
         const std::string version = StringHelper::Sprintf("Build: %d", GetVersion());
-        const std::string hwid = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(hwInfo.szHwProfileGuid);
+        const std::string hwid    = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(hwInfo.szHwProfileGuid);
 #elif defined(__SWITCH__)
         DeviceType type = DeviceType::SWITCH;
         std::string version = std::string(Ship::Switch::GetSwitchVersion());
         std::string hwid    = std::string(Ship::Switch::GetSwitchHWID());
 #elif defined(__linux__)
         DeviceType type = DeviceType::LINUX;
+        struct utsname info;
+        uname(&info);
+
+        std::string version = StringHelper::Sprintf("%s %s", info.sysname, info.release);
+        std::string hwid    = std::string(info.machine);
 #elif defined(__APPLE__)
         DeviceType type = DeviceType::MAC;
         std::string version;

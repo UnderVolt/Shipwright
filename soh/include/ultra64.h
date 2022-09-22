@@ -7,7 +7,7 @@
 #include "ultra64/types.h"
 #include "unk.h"
 
-#ifndef __SWITCH__
+#if !defined(__SWITCH__) && !defined(__linux__)
 #include "libc/stdarg.h"
 #include "libc/stdbool.h"
 #include "libc/stddef.h"

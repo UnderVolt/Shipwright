@@ -97,7 +97,7 @@ Sprite* Randomizer::GetSeedTexture(uint8_t index) {
     return &gSeedTextures[index];
 }
 
-Randomizer::~Randomizer() { 
+Randomizer::~Randomizer() {
     this->randoSettings.clear();
     this->itemLocations.clear();
     this->merchantPrices.clear();
@@ -504,7 +504,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
 
         for (auto it = settingsJson.begin(); it != settingsJson.end(); ++it) {
             // todo load into cvars for UI
-            
+
             std::string numericValueString;
             if(SpoilerfileSettingNameToEnum.count(it.key())) {
                 gSaveContext.randoSettings[index].key = SpoilerfileSettingNameToEnum[it.key()];
@@ -514,7 +514,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                 switch(gSaveContext.randoSettings[index].key) {
                     case RSK_FOREST:
                         if(it.value() == "Closed") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Open") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Closed Deku") {
@@ -523,14 +523,14 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_KAK_GATE:
                         if(it.value() == "Closed") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Open") {
                             gSaveContext.randoSettings[index].value = 1;
                         }
                         break;
                     case RSK_DOOR_OF_TIME:
                         if(it.value() == "Open") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Song only") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Closed") {
@@ -539,7 +539,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_ZORAS_FOUNTAIN:
                         if(it.value() == "Closed") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Closed as child") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Open") {
@@ -548,7 +548,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_GERUDO_FORTRESS:
                         if(it.value() == "Normal") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Fast") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Open") {
@@ -557,7 +557,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_RAINBOW_BRIDGE:
                         if(it.value() == "Always open") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Vanilla") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Stones") {
@@ -585,7 +585,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_SHOPSANITY:
                         if(it.value() == "Off") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "0 Items") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "1 Item") {
@@ -602,7 +602,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_SHUFFLE_SCRUBS:
                         if(it.value() == "Off") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Affordable") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Expensive") {
@@ -625,7 +625,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                     case RSK_SUNLIGHT_ARROWS:
                     case RSK_BOMBCHUS_IN_LOGIC:
                         if(it.value() == "Off") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "On") {
                             gSaveContext.randoSettings[index].value = 1;
                         }
@@ -642,7 +642,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_STARTING_MAPS_COMPASSES:
                         if(it.value() == "Start With") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Vanilla") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Own Dungeon") {
@@ -657,14 +657,14 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_STARTING_OCARINA:
                         if(it.value() == "Off") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Fairy Ocarina") {
                             gSaveContext.randoSettings[index].value = 1;
                         }
                         break;
                     case RSK_GOSSIP_STONE_HINTS:
                         if(it.value() == "No Hints") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Need Nothing") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Mask of Truth") {
@@ -675,7 +675,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_HINT_CLARITY:
                         if(it.value() == "Obscure") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Ambiguous") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Clear") {
@@ -684,7 +684,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_HINT_DISTRIBUTION:
                         if(it.value() == "Useless") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Balanced") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Strong") {
@@ -706,7 +706,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_KEYSANITY:
                         if(it.value() == "Start With") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Vanilla") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Own Dungeon") {
@@ -721,7 +721,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                         break;
                     case RSK_BOSS_KEYSANITY:
                         if(it.value() == "Start With") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Vanilla") {
                             gSaveContext.randoSettings[index].value = 1;
                         } else if(it.value() == "Own Dungeon") {
@@ -755,7 +755,7 @@ void Randomizer::ParseRandomizerSettingsFile(const char* spoilerFileName) {
                     case RSK_STARTING_CONSUMABLES:
                     case RSK_FULL_WALLETS:
                         if(it.value() == "No") {
-                            gSaveContext.randoSettings[index].value = 0;            
+                            gSaveContext.randoSettings[index].value = 0;
                         } else if(it.value() == "Yes") {
                             gSaveContext.randoSettings[index].value = 1;
                         }
@@ -1735,7 +1735,7 @@ GetItemID Randomizer::GetItemIdFromRandomizerGet(RandomizerGet randoGet, GetItem
             return GI_HEART_PIECE;
         case RG_HEART_CONTAINER:
             return GI_HEART_CONTAINER;
-        
+
         case RG_DEKU_NUTS_5:
         case RG_BUY_DEKU_NUT_5:
             return GI_NUTS_5;
@@ -1762,8 +1762,8 @@ GetItemID Randomizer::GetItemIdFromRandomizerGet(RandomizerGet randoGet, GetItem
 bool Randomizer::IsItemVanilla(RandomizerGet randoGet) {
     switch (randoGet) {
         case RG_NONE:
-        case RG_KOKIRI_SWORD: 
-        case RG_GIANTS_KNIFE: 
+        case RG_KOKIRI_SWORD:
+        case RG_GIANTS_KNIFE:
         case RG_BIGGORON_SWORD:
         case RG_DEKU_SHIELD:
         case RG_HYLIAN_SHIELD:
@@ -1784,7 +1784,7 @@ bool Randomizer::IsItemVanilla(RandomizerGet randoGet) {
         case RG_LIGHT_ARROWS:
         case RG_GERUDO_MEMBERSHIP_CARD:
         case RG_MAGIC_BEAN:
-        case RG_WEIRD_EGG: 
+        case RG_WEIRD_EGG:
         case RG_ZELDAS_LETTER:
         case RG_RUTOS_LETTER:
         case RG_POCKET_EGG:
@@ -2056,7 +2056,7 @@ ScrubIdentity Randomizer::IdentifyScrub(s32 sceneNum, s32 actorParams, s32 respa
             }
             break;
         case SCENE_KAKUSIANA: // Grotto
-            switch (respawnData) { 
+            switch (respawnData) {
                 case 0xE6: // Hyrule Field Scrub Grotto
                     switch (actorParams) {
                         case 0x02:
@@ -2224,7 +2224,7 @@ ScrubIdentity Randomizer::IdentifyScrub(s32 sceneNum, s32 actorParams, s32 respa
             }
             break;
     }
-    
+
     if (merchantPrices.find(scrubIdentity.randomizerCheck) != merchantPrices.end()) {
         scrubIdentity.itemPrice = merchantPrices[scrubIdentity.randomizerCheck];
     }
@@ -3642,7 +3642,7 @@ void GenerateRandomizerImgui() {
     // at the ranch, so we should *not* shuffle the weird egg
     cvarSettings[RSK_SHUFFLE_WEIRD_EGG] = ((CVar_GetS32("gRandomizeSkipChildZelda", 0) == 0) &&
                                             CVar_GetS32("gRandomizeShuffleWeirdEgg", 0));
-    
+
     cvarSettings[RSK_SHUFFLE_GERUDO_MEMBERSHIP_CARD] = CVar_GetS32("gRandomizeShuffleGerudoToken", 0);
     cvarSettings[RSK_SHUFFLE_FROG_SONG_RUPEES] = CVar_GetS32("gRandomizeShuffleFrogSongRupees", 0);
     cvarSettings[RSK_ITEM_POOL] = CVar_GetS32("gRandomizeItemPool", 1);
@@ -3658,7 +3658,7 @@ void GenerateRandomizerImgui() {
     cvarSettings[RSK_GANONS_BOSS_KEY] = CVar_GetS32("gRandomizeShuffleGanonBossKey", 1);
     cvarSettings[RSK_STARTING_CONSUMABLES] = CVar_GetS32("gRandomizeStartingConsumables", 0);
     cvarSettings[RSK_FULL_WALLETS] = CVar_GetS32("gRandomizeFullWallets", 0);
-    
+
     // RANDOTODO implement chest minigame shuffle with keysanity
     cvarSettings[RSK_SHUFFLE_CHEST_MINIGAME] = false;
 
@@ -3679,7 +3679,7 @@ void GenerateRandomizerImgui() {
 
     cvarSettings[RSK_SKULLS_SUNS_SONG] = CVar_GetS32("gRandomizeGsExpectSunsSong", 0);
     // Link's Pocket has to have a dungeon reward if the other rewards are shuffled to end of dungeon.
-    cvarSettings[RSK_LINKS_POCKET] = CVar_GetS32("gRandomizeShuffleDungeonReward", 0) != 0 ? 
+    cvarSettings[RSK_LINKS_POCKET] = CVar_GetS32("gRandomizeShuffleDungeonReward", 0) != 0 ?
                                         CVar_GetS32("gRandomizeLinksPocket", 0) : 0;
 
     // todo: this efficently when we build out cvar array support
@@ -4896,15 +4896,15 @@ CustomMessageEntry Randomizer::GetRupeeMessage(u16 rupeeTextId) {
     return messageEntry;
 }
 
-CustomMessageMinimal NaviMessages[NUM_NAVI_MESSAGES] = { 
-    
-    { "%cMissing a small key in a dungeon?&Maybe the %rboss %chas it!", 
-      "%cFehlt dir ein kleiner Schlüssel in &einem Labyrinth? Vielleicht hat ihn&ja der %rEndgegner%c!", 
-      "%cIl te manque une %wPetite Clé %cdans&un donjon? C'est peut-être le %rboss&%cqui l'a!" }, 
+CustomMessageMinimal NaviMessages[NUM_NAVI_MESSAGES] = {
 
-    { "%cSometimes you can use the %rMegaton&Hammer %cinstead of bombs!", 
+    { "%cMissing a small key in a dungeon?&Maybe the %rboss %chas it!",
+      "%cFehlt dir ein kleiner Schlüssel in &einem Labyrinth? Vielleicht hat ihn&ja der %rEndgegner%c!",
+      "%cIl te manque une %wPetite Clé %cdans&un donjon? C'est peut-être le %rboss&%cqui l'a!" },
+
+    { "%cSometimes you can use the %rMegaton&Hammer %cinstead of bombs!",
       "%cManchmal kannst du den %rStahlhammer&%cstatt Bomben verwenden!",
-      "%cParfois, tu peux utiliser la %rMasse&des Titans %cau lieu de tes bombes!" }, 
+      "%cParfois, tu peux utiliser la %rMasse&des Titans %cau lieu de tes bombes!" },
 
     { "%cThere are three %gbusiness scrubs %cin &Hyrule who sell %wmysterious items%c. Do&you know where they are?",
       "%cEs gibt drei %gDeku-Händler %cin Hyrule&die mysteriöse Gegenstände&verkaufen. Weißt du wo Sie sind?",
@@ -4914,19 +4914,19 @@ CustomMessageMinimal NaviMessages[NUM_NAVI_MESSAGES] = {
       "%cHängst du bei diesem Seed fest?&Du könntest die Flinte ins Korn&werfen und ins %wSpoiler Log %cschauen...",
       "%cSi tu es coincé sur cette seed,&tu peux toujours jeter l'éponge&et regader le %wSpoiler log%c..." },
 
-    { "%cDid you know that the %yHover&Boots %ccan be used to cross&%wquicksand%c?", 
+    { "%cDid you know that the %yHover&Boots %ccan be used to cross&%wquicksand%c?",
       "%cWußtest du, daß du mit den&%yGleitstiefeln %cTreibsand %wüberqueren&kannst%c?",
       "%cEst-ce que tu savais que les %rBottes&des airs %cpouvaient être utilisées&pour traverser les %wsables mouvants%c?" },
 
-    { "%cYou can reach the back of %wImpa's&House %cby jumping from the&unfinished house with a %rcucco%c!", 
+    { "%cYou can reach the back of %wImpa's&House %cby jumping from the&unfinished house with a %rcucco%c!",
       "%cDu kannst den Balkon von %wImpas&Haus %cerreichen indem du von&der Baustelle aus mit einem %rHuhn&%cspringst!",
       "%cTu peux atteindre l'arrière de la&%wMaison d'Impa %cen sautant depuis la&maison en construction avec une&%rcocotte%c!" },
 
-    { "%cThe %ySpirit Trial %cin %pGanon's Castle&%chas a %whidden chest %csomewhere.&Did you already know that?", 
+    { "%cThe %ySpirit Trial %cin %pGanon's Castle&%chas a %whidden chest %csomewhere.&Did you already know that?",
       "%cDie %yGeister-Prüfung %cin %pGanons&Schloß %chat irgendwo eine&%wversteckte Kiste%c. Weißt du schon&wo?",
       "%cL'%yÉpreuve de l'Esprit%c dans le %pChâteau&de Ganon %ca un coffre caché quelque&part. Je suppose que tu le savais&déjà?" },
 
-    { "%cYou know the %wBombchu Bowling&Alley%c? I heard %wonly two of the &prizes %care worthwhile. The rest &is junk!", 
+    { "%cYou know the %wBombchu Bowling&Alley%c? I heard %wonly two of the &prizes %care worthwhile. The rest &is junk!",
       "%cKennst du die %wMinenbowlingbahn%c?&Ich habe gehört daß sich nur &%wzwei der Preise%c lohnen. Der Rest&ist Krimskrams!",
       "%cEst-ce que tu savais qu'au %wBowling&Teigneux%c, il n'y a que les %wdeux&premiers prix %cqui sont intéréssant?" },
 
@@ -4934,35 +4934,35 @@ CustomMessageMinimal NaviMessages[NUM_NAVI_MESSAGES] = {
       "%cBenutzt du auch genügend %wDeku&Nüsse%c? Ich habe mal gesehen daß&man damit %rKrabbelminen %cdetonieren&kann!",
       "%cTu es sûr d'utiliser tes %wNoix Mojo &%ccorrectement? J'en ai déjà vu&exploser des %rChoux-Péteurs%c!" },
 
-    { "%cYou might end up with an %wextra&key %cfor the %bWater Temple %cor the&%rFire Temple%c. It's for your safety!", 
+    { "%cYou might end up with an %wextra&key %cfor the %bWater Temple %cor the&%rFire Temple%c. It's for your safety!",
       "%cVielleicht verbleibt dir im&%bWassertempel %coder %rFeuertempel %cein&%wzusätzlicher Schlüssel%c. Dies&ist zu deiner Sicherheit!",
       "%cIl se peut que tu aies une %wPetite&Clé %cen trop dans le %bTemple de l'Eau&%cou le %rTemple du Feu%c. C'est pour ta&propre sécurité!" },
 
-    { "%cIf you can't pick up a %rbomb&flower %cwith your hands, you can&still detonate it with %rfire %cor&with %warrows%c!", 
+    { "%cIf you can't pick up a %rbomb&flower %cwith your hands, you can&still detonate it with %rfire %cor&with %warrows%c!",
       "%cNur weil du eine %rDonnerblume&%cnicht hochheben kannst, so kannst&du sie immernoch mit %rFeuer %coder&%wPfeilen %cdetonieren!",
       "%cSi tu ne peux pas ramasser&un %rChoux-Péteur %cavec tes mains, tu&peux toujours le faire exploser&avec du %rFeu %cou avec des %wflèches%c!" },
 
-    { "%cEven an adult can't push large&blocks without some %wextra&strength%c!", 
+    { "%cEven an adult can't push large&blocks without some %wextra&strength%c!",
       "%cSelbst ein Erwachsener kann ohne&etwas %wzusätzliche Kraft %ckeine&großen Blöcke verschieben!",
       "%cMême un adulte ne peut pas pousser&de grands blocs sans un petit %wgain&de force%c!" },
 
-    { "%cI've heard that %rFlare Dancer&%cis weak to the %wMaster Sword%c!&Have you tried it?", 
+    { "%cI've heard that %rFlare Dancer&%cis weak to the %wMaster Sword%c!&Have you tried it?",
       "%cIch habe gehört daß der&%rFlammenderwisch %ceine Schwäche für&das %wMasterschwert %caufweist. Hast du&es schonmal versucht einzusetzen?",
       "%cJ'ai entendu dire que les %rDanse-&Flammes %csont faîbles face à l'%wÉpée de&Légende%c! Est-ce que tu as essayé?" },
 
-    { "%cDon't have a weapon to kill a&%rspider%c? Try throwing a %wpot&%cat it!", 
+    { "%cDon't have a weapon to kill a&%rspider%c? Try throwing a %wpot&%cat it!",
       "%cFehlt dir die Waffe um gegen&eine %rSkulltula %czu kämpfen? Versuch&Sie mit einem %wKrug %cabzuwerfen!",
       "%cSi tu n'as pas d'arme pour tuer&une %raraignée%c, pourquoi n'essayerais&-tu pas de lui jetter une %wjarre&%cà la figure?" },
 
-    { "%cI hear the patch of %wsoft soil&%cin %bZora's River %cis the only one&that isn't home to a %rspider%c!", 
+    { "%cI hear the patch of %wsoft soil&%cin %bZora's River %cis the only one&that isn't home to a %rspider%c!",
       "%cIch habe gehört daß die Stelle&%wfeuchten Bodens %cim %bZora-Fluß %cals&einzige keine %rSkulltula %cbeherbergt.",
       "%cJ'ai entendu dire que la %wterre meuble&%cqui se trouve à la %bRivière Zora %cest&la seule qui ne contienne pas&d'%raraignée%c." },
 
-    { "%cThe people of Hyrule sometimes&have %witems %cfor you, but they won't&like it if you're %wwearing a mask%c!", 
+    { "%cThe people of Hyrule sometimes&have %witems %cfor you, but they won't&like it if you're %wwearing a mask%c!",
       "%cDie Bewohner Hyrules haben manchmal&%wGegenstände %cfür dich, aber Sie mögen&es nicht wenn du %wMasken trägst%c!",
       "%cIl se peut que les habitants d'Hyrule&aient des %wobjets %cpour toi. Par contre,&ils risquent de ne pas trop apprécier&le fait que tu %wportes un masque%c!" },
 
-    { "%cIf you get trapped somewhere, you&might have to %wsave your game %cand&%wreset%c!", 
+    { "%cIf you get trapped somewhere, you&might have to %wsave your game %cand&%wreset%c!",
       "%cSolltest du irgendwo eingeschloßen&sein, mußt du vielleicht dein %wSpiel&speichern %cund %wneustarten%c!",
       "%cSi tu es coincé quelque part, tu&devrais %wsauvegarder ta partie %cet&faire un %wreset%c!" },
 
