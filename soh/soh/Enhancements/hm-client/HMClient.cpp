@@ -19,6 +19,7 @@
 #include <libultraship/SwitchImpl.h>
 #elif __linux__
 #include <sys/utsname.h>
+#include <cstdio>
 #endif
 #include <libultraship/Lib/ImGui/imgui_internal.h>
 
@@ -260,8 +261,24 @@ void DrawLinkDeviceUI() {
         struct utsname info;
         uname(&info);
 
-        std::string version = StringHelper::Sprintf("%s %s", info.sysname, info.release);
-        std::string hwid    = std::string(info.machine);
+        std::array<char, 128> buffer;
+        std::string raw;
+        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("ip -o link show | cut -d ' ' -f 2,20 | grep \"$(ip route show | grep default | cut -d ' ' -f 5)\"", "r"), pclose);
+        if (!pipe) {
+            throw std::runtime_error("popen() failed!");
+        }
+        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+            raw += buffer.data();
+        }
+
+        std::vector<std::string> rawInfo = StringHelper::Split(raw.substr(0, raw.length() - 2), ": ");
+
+        if(rawInfo.size() < 2) {
+            return;
+        }
+
+        std::string hwid    = rawInfo[1];
+        std::string version = StringHelper::Sprintf("%s %s %s", info.sysname, info.machine, info.release);
 #elif defined(__APPLE__)
         DeviceType type = DeviceType::MAC;
         std::string version;
