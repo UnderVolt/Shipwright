@@ -1,15 +1,19 @@
 #include "HMApi.h"
 #include <cpr/cpr.h>
 #include <iostream>
+#include "../utils/picosha2.h"
 
 Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::string & device_version, GameID game_id, const std::string & game_version, const std::string & hardware_id) {
+
+    std::vector<unsigned char> hash(picosha2::k_digest_size);
+    picosha2::hash256(hardware_id.begin(), hardware_id.end(), hash.begin(), hash.end());
 
     json body = {
         { "device_type", i_devices.at(device_type) },
         { "device_version", device_version },
         { "game_id", i_games.at(game_id) },
         { "game_version", game_version },
-        { "hardware_id", hardware_id }
+        { "hardware_id", picosha2::bytes_to_hex_string(hash.begin(), hash.end()) }
     };
 
     cpr::Response r = cpr::Post(

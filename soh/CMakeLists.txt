@@ -400,6 +400,7 @@ source_group("Source Files\\soh\\Enhancements\\hm-client\\api" FILES ${Source_Fi
 
 set(Header_Files__soh__Enhancements__hm_client_utils
     "soh/Enhancements/hm-client/utils/Base64.h"
+    "soh/Enhancements/hm-client/utils/picosha2.h"
 )
 
 set(Source_Files__soh__Enhancements__hm_client_utils
