@@ -6,7 +6,7 @@
 
 #include "utils/Base64.h"
 #include "api/HMApi.h"
-#include "utils/StringHelper.h"
+#include "Utils/StringHelper.h"
 #include "variables.h"
 #include <codecvt>
 #include "../../SaveManager.h"
@@ -15,6 +15,8 @@
 #ifdef _WIN32
 #define NOGDI
 #include <windows.h>
+#elif __SWITCH__
+#include <libultraship/SwitchImpl.h>
 #endif
 #include <libultraship/Lib/ImGui/imgui_internal.h>
 
@@ -62,14 +64,14 @@ void HMClient::FetchData(const bool save) {
 
     const User user = std::any_cast<User>(res.data);
     this->SetUser(user);
-    this->SetMaxSlots(std::min(SaveManager::MaxFiles, (int)user.slots));
+    this->SetMaxSlots(std::min(3, (int)user.slots));
 
     if (save) {
         this->Save(session);
     }
-	
+
 	HMApi::UnlockAllSaves(this->session);
-	
+
     const Response saves = HMApi::ListSaves(this->session, GameID::OOT, ROM_VERSION);
 
     if (saves.code != ResponseCodes::OK) {
@@ -95,7 +97,7 @@ void HMClient::LoadSave(int slot) {
 	if (link.id.empty()) {
         return;
     }
-	
+
     auto save = std::find_if(this->saves.begin(), this->saves.end(),
                              [link](CloudSave& save) -> bool { return save.id == link.id; });
 
@@ -149,7 +151,7 @@ void HMClient::SetLockSave(int slot, bool status) {
 void HMClient::UploadSave(int slot, const std::string& data) {
     const SaveManager* sm = SaveManager::Instance;
     LinkedSave& currentSave = this->GetLinkedSaves().at(slot);
-	
+
     auto save = std::find_if(this->saves.begin(), this->saves.end(),
                              [currentSave](CloudSave& save) -> bool { return save.id == currentSave.id; });
 
@@ -178,14 +180,14 @@ void HMClient::UploadSave(int slot, const std::string& data) {
 bool HMClient::CanLoadSave(int slot) {
 
     LinkedSave& currentSave = this->GetLinkedSaves().at(slot);
-	
+
     const Response res = HMApi::GetSaveLock(this->GetSession(), currentSave.id);
 
     if (res.code != ResponseCodes::OK) {
         SPDLOG_ERROR(res.error);
         return false;
     }
-	
+
     auto save = std::find_if(this->saves.begin(), this->saves.end(),
                              [currentSave](CloudSave& save) -> bool { return save.id == currentSave.id; });
 
@@ -203,14 +205,14 @@ bool HMClient::CanLoadSave(int slot) {
         this->ResetSave(slot);
         return false;
     }
-	
+
     return true;
 }
 
 bool HMClient::NeedsOnlineSave(int slot, const std::string& data) {
     HMClient* instance = HMClient::Instance;
     LinkedSave& currentSave = instance->GetLinkedSaves().at(slot);
-	
+
 	if (!currentSave.id.empty()) {
         instance->UploadSave(slot, data);
         return true;
@@ -247,6 +249,13 @@ void DrawLinkDeviceUI() {
         const DeviceType type = DeviceType::WINDOWS;
         const std::string version = StringHelper::Sprintf("Build: %d", GetVersion());
         const std::string hwid = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(hwInfo.szHwProfileGuid);
+#elif defined(__SWITCH__)
+        DeviceType type = DeviceType::SWITCH;
+        std::string version = "Atmosphere";// Ship::Switch::GetSwitchVersion();
+        std::string hwid    = "1.0"; // Ship::Switch::GetSwitchHWID();
+
+        printf("Data: %s %s\n", hwid.c_str(), version.c_str());
+
 #elif defined(__linux__)
         DeviceType type = DeviceType::LINUX;
 #elif defined(__APPLE__)
@@ -276,9 +285,6 @@ void DrawLinkDeviceUI() {
                 deviceId += buffer;
         }
         pclose(pipe);
-#elif defined(__SWITCH__)
-        DeviceType type = DeviceType::SWITCH;
-        std::string version = StringHelper::Sprintf("OS: %d", GetVersion());
 #elif defined(__WIIU__)
         DeviceType type = DeviceType::WII_U;
 #else
@@ -288,13 +294,15 @@ void DrawLinkDeviceUI() {
         const Response res =
             HMApi::LinkDevice(atoi(inputBuffer), type, version, GameID::OOT, std::string((char*)gBuildVersion), hwid);
 
+        printf("Response: %d\n", res.code);
+
         if (res.code != ResponseCodes::OK) {
             SPDLOG_ERROR(res.error);
         } else {
             HMClient* instance = HMClient::Instance;
             instance->SetSession(std::any_cast<AuthSession>(res.data));
             instance->FetchData(true);
-            
+
             SPDLOG_INFO("Successfully linked device!");
         }
     }
@@ -324,14 +332,14 @@ void DrawSlotSelector(size_t slot) {
 
                 if (linkedSaveQuery != linkedSaves.end())
                     continue;
-				
+
 				bool canSwapSave = save.player.empty() || save.player == instance->GetSession().access_token;
-				
+
                 if (!canSwapSave) {
                     ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
                     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
                 }
-				
+
                 if (ImGui::Selectable((canSwapSave ? save.name : (save.name + " [Locked]")).c_str(), is_selected)) {
                     currentSave.id = save.id;
                     currentSave.name = save.name;
@@ -342,7 +350,7 @@ void DrawSlotSelector(size_t slot) {
                     ImGui::PopItemFlag();
                     ImGui::PopStyleVar();
                 }
-            }	
+            }
         }
 
         if (ImGui::Selectable("[None]", currentSave.name.empty())) {
@@ -350,7 +358,7 @@ void DrawSlotSelector(size_t slot) {
             currentSave.name = "";
             instance->ResetSave(slot);
         }
-		
+
         if (saves.size() < user->slots && ImGui::Selectable("[New Save]", false)) {
             std::string saveName = StringHelper::Sprintf("TemporalName[%d]", saves.size());
             const Response res = HMApi::NewSave(instance->GetSession(), saveName, GameID::OOT, ROM_VERSION,
@@ -393,21 +401,21 @@ void DrawManagerUI(const User* user) {
     ImGui::Dummy(ImVec2(0, 5));
 
     bool canSwapSave = gGlobalCtx == nullptr && canEditSaves;
-	
+
     if (!canSwapSave) {
         ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
     }
-	
+
     for (size_t slot = 0; slot < instance->GetMaxSlots(); slot++) {
-        DrawSlotSelector(slot);   
+        DrawSlotSelector(slot);
     }
     if (ImGui::Button("Refresh")) {
         instance->FetchData();
     }
 
     ImGui::SameLine();
-	
+
 	if (ImGui::Button("Disconnect")) {
         CVar_SetString("gHMAccountData", "None");
         instance->Disconnect();
@@ -444,7 +452,7 @@ extern "C" {
 void HMClient_Init(void) {
     InitHMClient();
     HMClient::Instance->Init();
-	
+
     Ship::RegisterHook<Ship::ExitGame>([] {
         if (gSaveContext.fileNum > 0 && gSaveContext.fileNum < 3)
             HMClient::Instance->SetLockSave(gSaveContext.fileNum, false);

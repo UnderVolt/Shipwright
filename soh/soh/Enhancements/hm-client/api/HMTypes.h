@@ -1,4 +1,5 @@
-#pragma once
+#ifndef HMTypes
+#define HMTypes
 
 #include <any>
 #include <string>
@@ -77,15 +78,10 @@ static std::vector<std::string> i_endianess = { "big", "little", "none" };
 #define LINK(type, key) j.at(#key).get_to(type.key)
 #define CNV(type, key) { #key, type.key }
 
-void to_json(json& j, const AuthSession& auth) {
-    j = json{ CNV(auth, access_token), CNV(auth, refresh_token), CNV(auth, expires_in) };
-}
-
-void from_json(const json& j, AuthSession& auth) {
-    LINK(auth, access_token);
-    LINK(auth, refresh_token);
-    LINK(auth, expires_in);
-}
+void to_json(json& j, const AuthSession& auth);
+void from_json(const json& j, AuthSession& auth);
+void from_json(const json& j, User& user);
+void from_json(const json& j, CloudSave& save);
 
 //void to_json(json& j, const LinkSave& save) {
 //    j = json{ CNV(save, slot), CNV(save, save_id) };
@@ -96,29 +92,4 @@ void from_json(const json& j, AuthSession& auth) {
 //    LINK(save, save_id);
 //}
 
-void from_json(const json& j, User& user) {
-    LINK(user, uuid);
-    LINK(user, user);
-    LINK(user, discriminator);
-    LINK(user, email);
-    LINK(user, authid);
-    LINK(user, created_at);
-    user.slots = (uint32_t) j["slots"];
-}
-
-void from_json(const json& j, CloudSave& save) {
-    LINK(save, id);
-    LINK(save, name);
-    LINK(save, game_version);
-    LINK(save, rom_version);
-    LINK(save, updated_at);
-    LINK(save, has_data);
-    LINK(save, player);
-    LINK(save, lock_time);
-    save.game_id = (GameID)(std::find(i_games.begin(), i_games.end(), j["game_id"]) - i_games.begin());
-    save.endianess =
-        (Endianess)(std::find(i_endianess.begin(), i_endianess.end(), j["endianess"]) - i_endianess.begin());
-    LINK(save, blob);
-    LINK(save, md5);
-    LINK(save, metadata);
-}
+#endif

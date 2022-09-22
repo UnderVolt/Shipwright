@@ -1972,13 +1972,6 @@ add_dependencies(${PROJECT_NAME}
 
 find_package(CURL REQUIRED)
 
-include(FetchContent)
-FetchContent_Declare(
-    cpr GIT_REPOSITORY https://github.com/HarbourMasters/cpr.git
-    GIT_TAG 138bfc5f4f807ccd0fac4a779933af6ba1912962
-)
-FetchContent_MakeAvailable(cpr)
-
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
 		set(ADDITIONAL_LIBRARY_DEPENDENCIES
@@ -2011,8 +2004,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	endif()
 elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     find_package(SDL2)
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    set(CPR_ENABLE_SSL OFF)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "libultraship;"
         "ZAPDUtils;"
@@ -2047,6 +2041,13 @@ else()
 		Threads::Threads
 	)
 endif()
+
+include(FetchContent)
+FetchContent_Declare(
+    cpr GIT_REPOSITORY https://github.com/HarbourMasters/cpr.git
+    GIT_TAG 138bfc5f4f807ccd0fac4a779933af6ba1912962
+)
+FetchContent_MakeAvailable(cpr)
 
 if(NOT CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS")
 INSTALL(TARGETS soh DESTINATION . COMPONENT ship)

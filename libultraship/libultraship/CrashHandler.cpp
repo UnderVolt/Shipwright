@@ -140,7 +140,7 @@ static void ErrorHandler(int sig, siginfo_t* sigInfo, void* data) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "SoH has crashed", "SoH Has crashed. Please upload the logs to the support channel in discord.", nullptr);
     free(symbols);
     DeinitOTR();
-    Ship::ExecuteHooks<Ship::GameCrash>();
+    Ship::ExecuteHooks<Ship::CrashGame>();
     Ship::Window::GetInstance()->GetLogger()->flush();
     spdlog::shutdown();
     exit(1);

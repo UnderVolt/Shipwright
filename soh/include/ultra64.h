@@ -7,10 +7,18 @@
 #include "ultra64/types.h"
 #include "unk.h"
 
+#ifndef __SWITCH__
 #include "libc/stdarg.h"
 #include "libc/stdbool.h"
 #include "libc/stddef.h"
 #include "libc/stdlib.h"
+#else
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#endif
+
 #include "libc/math.h"
 
 #include "ultra64/exception.h"

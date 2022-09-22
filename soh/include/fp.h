@@ -6,6 +6,7 @@ extern f32 qNaN0x3FFFFF;
 extern f32 qNaN0x10000;
 extern f32 sNaN0x3FFFFF;
 
+#ifndef __SWITCH__
 f32 floorf(f32 x);
 f64 floor(f64 x);
 s32 lfloorf(f32 x);
@@ -30,5 +31,6 @@ f32 roundf(f32 x);
 f64 round(f64 x);
 s32 lroundf(f32 x);
 s32 lround(f64 x);
+#endif
 
 #endif

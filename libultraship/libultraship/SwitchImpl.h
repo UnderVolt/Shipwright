@@ -30,6 +30,8 @@ namespace Ship {
             static bool IsRunning();
             static void GetDisplaySize(int *width, int *height);
             static void ApplyOverclock();
+            static std::string GetSwitchVersion();
+            static std::string GetSwitchHWID();
             static void ThrowMissingOTR(std::string OTRPath);
             static void PrintErrorMessageToScreen(const char *str, ...);
     };

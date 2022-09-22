@@ -3,6 +3,7 @@
 #include <switch.h>
 #include <SDL2/SDL.h>
 #include "SwitchPerformanceProfiles.h"
+#include "Utils/StringHelper.h"
 #include "Cvar.h"
 #include "Hooks.h"
 
@@ -203,6 +204,20 @@ void DetectAppletMode() {
         "\x1b[5;2HHold R when opening any game to enter HBMenu."
         "\x1b[44;2H%s."
     , RandomTexts[rand() % 25]);
+}
+
+std::string Ship::Switch::GetSwitchVersion(){
+    SetSysSerialNumber serial;
+    setsysGetSerialNumber(&serial);
+
+    return StringHelper::Sprintf(hosversionIsAtmosphere() ? "Atmosphere %d - %s" : "HOS %d - %s", hosversionGet(), serial.number);
+}
+
+std::string Ship::Switch::GetSwitchHWID(){
+    Uuid uuid;
+    setsysGetExternalSteadyClockSourceId(&uuid);
+
+    return std::string((char*) uuid.uuid);
 }
 
 void Ship::Switch::ThrowMissingOTR(std::string OTRPath){

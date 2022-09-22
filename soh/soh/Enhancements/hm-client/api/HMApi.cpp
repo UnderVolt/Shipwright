@@ -18,6 +18,8 @@ Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::stri
         cpr::Body{body.dump()}
     );
 
+    printf("Code: %d - Text: %s\n", r.status_code, r.text.c_str());
+
     if (r.status_code != ResponseCodes::OK) {
         json j = json::parse(r.text);
         return { (ResponseCodes) r.status_code, j["error"] };
@@ -75,7 +77,7 @@ Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::s
     }
 
     json jobj = json::parse(r.text);
-    
+
     return Response{ ResponseCodes::OK, "NONE", jobj.get<std::vector<CloudSave>>() };
 }
 
@@ -106,9 +108,9 @@ Response HMApi::NewSave(const AuthSession& auth, const std::string& name, GameID
 }
 
 Response HMApi::UploadSave(const AuthSession & auth, const std::string & name, const std::string & blob, GameID game_id, const std::string & rom_version, const std::string & game_version, int32_t version, Endianess endianess, const std::string& id) {
-    
+
     std::vector<uint8_t> rawBlob(blob.begin(), blob.end());
-	
+
     json body = {
         { "name", name },
         { "blob", rawBlob },
@@ -219,4 +221,41 @@ Response HMApi::UnlockAllSaves(const AuthSession& auth) {
     );
 
     return Response{ ResponseCodes::OK };
+}
+
+void to_json(json& j, const AuthSession& auth) {
+    j = json{ CNV(auth, access_token), CNV(auth, refresh_token), CNV(auth, expires_in) };
+}
+
+void from_json(const json& j, AuthSession& auth) {
+    LINK(auth, access_token);
+    LINK(auth, refresh_token);
+    LINK(auth, expires_in);
+}
+
+void from_json(const json& j, User& user) {
+    LINK(user, uuid);
+    LINK(user, user);
+    LINK(user, discriminator);
+    LINK(user, email);
+    LINK(user, authid);
+    LINK(user, created_at);
+    user.slots = (uint32_t) j["slots"];
+}
+
+void from_json(const json& j, CloudSave& save) {
+    LINK(save, id);
+    LINK(save, name);
+    LINK(save, game_version);
+    LINK(save, rom_version);
+    LINK(save, updated_at);
+    LINK(save, has_data);
+    LINK(save, player);
+    LINK(save, lock_time);
+    save.game_id = (GameID)(std::find(i_games.begin(), i_games.end(), j["game_id"]) - i_games.begin());
+    save.endianess =
+        (Endianess)(std::find(i_endianess.begin(), i_endianess.end(), j["endianess"]) - i_endianess.begin());
+    LINK(save, blob);
+    LINK(save, md5);
+    LINK(save, metadata);
 }

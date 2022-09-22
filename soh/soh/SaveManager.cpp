@@ -528,7 +528,7 @@ void SaveManager::SaveFile(int fileNum) {
     if (HMClient::NeedsOnlineSave(fileNum, baseBlock.dump())) {
         return;
     }
-	
+
 #ifdef __SWITCH__
     const char* json_string = baseBlock.dump(4).c_str();
     FILE* w = fopen(GetFileName(fileNum).c_str(), "w");
@@ -635,8 +635,10 @@ void SaveManager::LoadJsonFile(const std::string& data, int fileNum) {
                 if (!sectionLoadHandlers.contains(sectionName)) {
                     // Unloadable sections aren't necessarily errors, they are probably mods that were unloaded
                     // TODO report in a more noticeable manner
+                #ifndef __SWITCH__
                     SPDLOG_WARN("Save at slot {} contains unloadable section " +
                                 sectionName, fileNum);
+                #endif
                     continue;
                 }
                 SectionLoadHandler& handler = sectionLoadHandlers[sectionName];
@@ -645,8 +647,10 @@ void SaveManager::LoadJsonFile(const std::string& data, int fileNum) {
                     // mod at an earlier version than the save has. In this case, the user probably wants to load the
                     // save. Report the error so that the user can rectify the error.
                     // TODO report in a more noticeable manner
+                #ifndef __SWITCH__
                     SPDLOG_ERROR("Save at slot {} contains section " + sectionName +
                                  " with an unloadable version " + std::to_string(sectionVersion), fileNum);
+                #endif
                     assert(false);
                     continue;
                 }
@@ -655,11 +659,13 @@ void SaveManager::LoadJsonFile(const std::string& data, int fileNum) {
             }
             break;
         default:
+        #ifndef __SWITCH__
             SPDLOG_ERROR("Unrecognized save version " + std::to_string(saveBlock["version"].get<int>()) + " in slot {}", fileNum);
+        #endif
             assert(false);
             break;
     }
-	
+
     InitMeta(fileNum);
 }
 
