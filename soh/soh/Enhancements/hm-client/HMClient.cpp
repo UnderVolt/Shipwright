@@ -275,7 +275,7 @@ void DrawLinkDeviceUI() {
                              ImGuiInputTextFlags_Numerical | ImGuiInputTextFlags_CharsNoBlank);
     ImGui::Dummy(ImVec2(0, 10));
 
-    if (ImGui::Button("Link") && strlen(inputBuffer) == (CODE_BUFFER_SIZE - 1)) {
+    if (ImGui::Button("Link") && strnlen(inputBuffer, CODE_BUFFER_SIZE) == (CODE_BUFFER_SIZE - 1)) {
 
 #ifdef _WIN32
         HW_PROFILE_INFO hwInfo;
