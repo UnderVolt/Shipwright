@@ -6,7 +6,7 @@
 using json = nlohmann::json;
 
 #ifdef NDEBUG
-#define HM_ENDPOINT "https://api.shipofharkinian.com"
+#define HM_ENDPOINT "https://dev.shipofharkinian.com"
 #else
 #define HM_ENDPOINT "https://dev.shipofharkinian.com"
 #endif
