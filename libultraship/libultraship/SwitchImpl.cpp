@@ -12,7 +12,6 @@ extern "C" void CVar_SetS32(const char* name, s32 value);
 
 #define DOCKED_MODE 1
 #define HANDHELD_MODE 0
-
 static AppletHookCookie applet_hook_cookie;
 static bool isRunning = true;
 static bool hasFocus  = true;
@@ -28,8 +27,8 @@ void Ship::Switch::Init(SwitchPhase phase){
             break;
         case PostInitPhase:
             appletInitializeGamePlayRecording();
-        #ifdef DEBUG
             socketInitializeDefault();
+        #ifdef DEBUG
             nxlinkStdio();
         #endif
             setsysInitialize();
@@ -44,9 +43,7 @@ void Ship::Switch::Init(SwitchPhase phase){
 }
 
 void Ship::Switch::Exit(){
-#ifdef DEBUG
     socketExit();
-#endif
     clkrstExit();
     setsysExit();
     appletSetGamePlayRecordingState(false);
