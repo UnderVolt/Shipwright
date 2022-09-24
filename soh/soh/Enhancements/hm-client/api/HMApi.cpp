@@ -45,6 +45,28 @@ Response HMApi::UnlinkDevice(const AuthSession& auth) {
     return Response{ ResponseCodes::OK };
 }
 
+Response HMApi::RefreshUser(const AuthSession & auth) {
+
+    json body = {
+        { "access_token", auth.access_token },
+        { "refresh_token", auth.refresh_token }
+    };
+
+    cpr::Response r = cpr::Post(
+        cpr::Url{ HM_ENDPOINT "/api/v1/auth/refresh" },
+        cpr::Header{
+            { "authorization", body.dump() },
+        }
+    );
+
+    if (r.status_code != ResponseCodes::OK) {
+        bool isJson = r.header["Content-Type"] == "application/json";
+        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
+    }
+
+    return Response{ ResponseCodes::OK, "NONE" };
+}
+
 Response HMApi::GetUser(const AuthSession & auth) {
     cpr::Response r = cpr::Get(
         cpr::Url{ HM_ENDPOINT "/api/v1/auth/me" },
@@ -52,6 +74,10 @@ Response HMApi::GetUser(const AuthSession & auth) {
             { "authorization", "Auth " + auth.access_token }
         }
     );
+
+    if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
+        HMApi::RefreshUser(auth);
+    }
 
     if (r.status_code != ResponseCodes::OK) {
         bool isJson = r.header["Content-Type"] == "application/json";
@@ -72,6 +98,10 @@ Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::s
         },
         cpr::Header{{ "authorization", "Auth " + auth.access_token }}
     );
+
+    if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
+        HMApi::RefreshUser(auth);
+    }
 
     if (r.status_code != ResponseCodes::OK) {
         bool isJson = r.header["Content-Type"] == "application/json";
@@ -100,6 +130,10 @@ Response HMApi::NewSave(const AuthSession& auth, const std::string& name, GameID
         },
         cpr::Body{ body.dump() }
     );
+
+    if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
+        HMApi::RefreshUser(auth);
+    }
 
     if (r.status_code != ResponseCodes::OK) {
         bool isJson = r.header["Content-Type"] == "application/json";
@@ -132,6 +166,10 @@ Response HMApi::UploadSave(const AuthSession & auth, const std::string & name, c
         cpr::Body{ body.dump() }
     );
 
+    if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
+        HMApi::RefreshUser(auth);
+    }
+
     if (r.status_code != ResponseCodes::OK) {
         bool isJson = r.header["Content-Type"] == "application/json";
         return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
@@ -147,6 +185,10 @@ Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
             { "authorization", "Auth " + auth.access_token }
         }
     );
+
+    if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
+        HMApi::RefreshUser(auth);
+    }
 
     if (r.status_code != ResponseCodes::OK) {
         bool isJson = r.header["Content-Type"] == "application/json";
@@ -165,6 +207,10 @@ Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
             { "authorization", "Auth " + auth.access_token }
         }
     );
+
+    if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
+        HMApi::RefreshUser(auth);
+    }
 
     if (r.status_code != ResponseCodes::OK) {
         bool isJson = r.header["Content-Type"] == "application/json";
@@ -188,6 +234,10 @@ Response HMApi::LockSave(const AuthSession& auth, const std::string& id, const b
         cpr::Body{body.dump()}
     );
 
+    if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
+        HMApi::RefreshUser(auth);
+    }
+
     if (r.status_code != ResponseCodes::OK) {
         bool isJson = r.header["Content-Type"] == "application/json";
         return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
@@ -203,6 +253,10 @@ Response HMApi::GetSaveLock(const AuthSession& auth, const std::string& id) {
             { "authorization", "Auth " + auth.access_token }
         }
     );
+
+    if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
+        HMApi::RefreshUser(auth);
+    }
 
     if (r.status_code != ResponseCodes::OK) {
         bool isJson = r.header["Content-Type"] == "application/json";
@@ -221,6 +275,10 @@ Response HMApi::UnlockAllSaves(const AuthSession& auth) {
             { "authorization", "Auth " + auth.access_token }
         }
     );
+
+    if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
+        HMApi::RefreshUser(auth);
+    }
 
     return Response{ ResponseCodes::OK };
 }

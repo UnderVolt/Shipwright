@@ -15,6 +15,7 @@ class HMApi {
 public:
     // User:
     static Response LinkDevice(int32_t code, DeviceType device_type, const std::string& device_version, GameID game_id, const std::string& game_version, const std::string & hardware_id);
+    static Response RefreshUser(const AuthSession & auth);
     static Response UnlinkDevice(const AuthSession& auth);
     static Response GetUser(const AuthSession& auth);
 
