@@ -8,6 +8,7 @@
 #include <whb/log.h>
 #include <whb/log_udp.h>
 #include <coreinit/debug.h>
+#include <coreinit/mcp.h>
 
 #include "Window.h"
 
@@ -126,6 +127,51 @@ VPADStatus *GetVPADStatus(VPADReadError *error) {
 KPADStatus *GetKPADStatus(WPADChan chan, KPADError *error) {
     *error = kpadError[chan];
     return hasKpad[chan] ? &kpadStatus[chan] : nullptr;
+}
+
+// Currently missing in wut, remove this once added
+struct WUT_PACKED MCPSystemVersion {
+    uint32_t major;
+    uint32_t minor;
+    uint32_t patch;
+    char region;
+    WUT_PADDING_BYTES(0x3);
+};
+WUT_CHECK_SIZE(MCPSystemVersion, 0x10);
+extern "C" MCPError MCP_GetSystemVersion(int32_t handle, MCPSystemVersion *systemVersion);
+
+const char* GetVersion() {
+    static char buffer[64];
+    strncpy(buffer, "Unknown", sizeof(buffer));
+
+    int32_t mcpHandle = MCP_Open();
+    if (mcpHandle >= 0) {
+        _Alignas(0x20) MCPSystemVersion version;
+        if (MCP_GetSystemVersion(mcpHandle, &version) >= 0) {
+            snprintf(buffer, sizeof(buffer), "%u.%u.%u%c", version.major, version.minor, version.patch, version.region);
+        }
+
+        MCP_Close(mcpHandle);
+    }
+
+    return buffer;
+}
+
+const char* GetHWID() {
+    static char buffer[64];
+    strncpy(buffer, "Unknown", sizeof(buffer));
+
+    int32_t mcpHandle = MCP_Open();
+    if (mcpHandle >= 0) {
+        _Alignas(0x20) MCPSysProdSettings settings;
+        if (MCP_GetSysProdSettings(mcpHandle, &settings) >= 0) {
+            snprintf(buffer, sizeof(buffer), "%s%s", settings.code_id, settings.serial_id);
+        }
+
+        MCP_Close(mcpHandle);
+    }
+
+    return buffer;
 }
 
 };

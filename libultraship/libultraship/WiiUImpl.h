@@ -18,5 +18,9 @@ VPADStatus *GetVPADStatus(VPADReadError *error);
 
 KPADStatus *GetKPADStatus(WPADChan chan, KPADError *error);
 
+const char* GetVersion();
+
+const char* GetHWID();
+
 };
 };

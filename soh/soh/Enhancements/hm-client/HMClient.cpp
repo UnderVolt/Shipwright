@@ -36,6 +36,8 @@ using json = nlohmann::json;
 #include <unistd.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
+#elif __WIIU__
+#include <libultraship/WiiUImpl.h>
 #endif
 
 #define MAX_SLOTS 3
@@ -245,11 +247,11 @@ void HMClient::UploadSave(int slot, const std::string& data) {
 #if (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || defined(__BIG_ENDIAN__)
     Endianess endian = Endianess::BIG;
 #else
-    Endianess little = Endianess::LITTLE;
+    Endianess endian = Endianess::LITTLE;
 #endif
 
     const Response res = HMApi::UploadSave(this->session, currentSave.name, data, GameID::OOT, ROM_VERSION,
-                                           std::string((char*)gBuildVersion), 1, little, currentSave.id);
+                                           std::string((char*)gBuildVersion), 1, endian, currentSave.id);
 
     if (res.code != ResponseCodes::OK) {
         SPDLOG_ERROR(res.error);
@@ -310,6 +312,11 @@ bool HMClient::NeedsOnlineSave(int slot, const std::string& data) {
 
 bool HMClient::NeedsOnlineLoad(int slot) {
     HMClient* instance = HMClient::Instance;
+
+    if (instance->GetLinkedSaves().size() <= slot) {
+        return false;
+    }
+
     LinkedSave& currentSave = instance->GetLinkedSaves().at(slot);
 
     if (!currentSave.id.empty()) {
@@ -415,6 +422,8 @@ void DrawLinkDeviceUI() {
         std::string hwid    = std::string(uuid_string);
 #elif defined(__WIIU__)
         DeviceType type = DeviceType::WII_U;
+        std::string version = std::string(Ship::WiiU::GetVersion());
+        std::string hwid    = std::string(Ship::WiiU::GetHWID());
 #else
 #error "Unsupported platform!"
 #endif
