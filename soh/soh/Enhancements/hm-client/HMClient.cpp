@@ -432,7 +432,7 @@ void DrawLinkDeviceUI() {
             HMApi::LinkDevice(atoi(inputBuffer), type, version, GameID::OOT, std::string((char*)gBuildVersion), hwid);
 
         if (res.code != ResponseCodes::OK) {
-            SPDLOG_ERROR(res.error);
+            SPDLOG_ERROR("{} {}", res.error, res.code);
             overlay->TextDrawNotification(15.0f, true, "Failed to link your device");
         } else {
             HMClient* instance = HMClient::Instance;

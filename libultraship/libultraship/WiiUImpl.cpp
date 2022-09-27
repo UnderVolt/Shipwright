@@ -146,7 +146,7 @@ const char* GetVersion() {
 
     int32_t mcpHandle = MCP_Open();
     if (mcpHandle >= 0) {
-        _Alignas(0x20) MCPSystemVersion version;
+        alignas(0x20) MCPSystemVersion version;
         if (MCP_GetSystemVersion(mcpHandle, &version) >= 0) {
             snprintf(buffer, sizeof(buffer), "%u.%u.%u%c", version.major, version.minor, version.patch, version.region);
         }
@@ -163,7 +163,7 @@ const char* GetHWID() {
 
     int32_t mcpHandle = MCP_Open();
     if (mcpHandle >= 0) {
-        _Alignas(0x20) MCPSysProdSettings settings;
+        alignas(0x20) MCPSysProdSettings settings;
         if (MCP_GetSysProdSettings(mcpHandle, &settings) >= 0) {
             snprintf(buffer, sizeof(buffer), "%s%s", settings.code_id, settings.serial_id);
         }

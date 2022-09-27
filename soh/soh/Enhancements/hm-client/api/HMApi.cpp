@@ -20,7 +20,12 @@ Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::stri
         cpr::Url{ HM_ENDPOINT "/api/v1/link/" + std::to_string(code) },
 		cpr::Header{{ "Content-Type", "application/json" }},
         cpr::Body{body.dump()}
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
+
+    printf("error: %s code %x\n", r.error.message.c_str(), r.error.code);
 
     if (r.status_code != ResponseCodes::OK) {
         bool isJson = r.header["Content-Type"] == "application/json";
@@ -35,6 +40,9 @@ Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::stri
 Response HMApi::UnlinkDevice(const AuthSession& auth) {
     cpr::Response r = cpr::Delete(
         cpr::Url{ HM_ENDPOINT "/api/v1/unlink/" }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
 
     if (r.status_code != ResponseCodes::OK) {
@@ -57,6 +65,9 @@ Response HMApi::RefreshUser(const AuthSession & auth) {
         cpr::Header{
             { "authorization", body.dump() },
         }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
 
     if (r.status_code != ResponseCodes::OK) {
@@ -73,6 +84,9 @@ Response HMApi::GetUser(const AuthSession & auth) {
         cpr::Header{
             { "authorization", "Auth " + auth.access_token }
         }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -97,6 +111,9 @@ Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::s
             { "rom_version", rom_version }
         },
         cpr::Header{{ "authorization", "Auth " + auth.access_token }}
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -129,6 +146,9 @@ Response HMApi::NewSave(const AuthSession& auth, const std::string& name, GameID
             { "Content-Type", "application/json" }
         },
         cpr::Body{ body.dump() }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -164,6 +184,9 @@ Response HMApi::UploadSave(const AuthSession & auth, const std::string & name, c
             { "Content-Type", "application/json" }
         },
         cpr::Body{ body.dump() }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -184,6 +207,9 @@ Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
         cpr::Header{
             { "authorization", "Auth " + auth.access_token }
         }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -206,6 +232,9 @@ Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
         cpr::Header{
             { "authorization", "Auth " + auth.access_token }
         }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -232,6 +261,9 @@ Response HMApi::LockSave(const AuthSession& auth, const std::string& id, const b
             { "Content-Type", "application/json" }
         },
         cpr::Body{body.dump()}
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -252,6 +284,9 @@ Response HMApi::GetSaveLock(const AuthSession& auth, const std::string& id) {
         cpr::Header{
             { "authorization", "Auth " + auth.access_token }
         }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -274,6 +309,9 @@ Response HMApi::UnlockAllSaves(const AuthSession& auth) {
         cpr::Header{
             { "authorization", "Auth " + auth.access_token }
         }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
