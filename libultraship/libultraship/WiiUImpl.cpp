@@ -70,10 +70,12 @@ void Init() {
 void Exit() {
     KPADShutdown();
 
+#ifdef _DEBUG
     WHBLogUdpDeinit();
+#endif
 }
 
-void ThrowMissingOTR(const char* otrPath) {
+void ThrowMissingOTR(const char *otrPath) {
     // TODO handle this better in the future
     OSFatal("Main OTR file not found!");
 }
@@ -140,7 +142,7 @@ struct WUT_PACKED MCPSystemVersion {
 WUT_CHECK_SIZE(MCPSystemVersion, 0x10);
 extern "C" MCPError MCP_GetSystemVersion(int32_t handle, MCPSystemVersion *systemVersion);
 
-const char* GetVersion() {
+const char *GetVersion() {
     static char buffer[64];
     strncpy(buffer, "Unknown", sizeof(buffer));
 
@@ -157,7 +159,7 @@ const char* GetVersion() {
     return buffer;
 }
 
-const char* GetHWID() {
+const char *GetHWID() {
     static char buffer[64];
     strncpy(buffer, "Unknown", sizeof(buffer));
 
@@ -172,6 +174,10 @@ const char* GetHWID() {
     }
 
     return buffer;
+}
+
+const char *GetCAPath() {
+    return "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/";
 }
 
 };

@@ -312,11 +312,6 @@ bool HMClient::NeedsOnlineSave(int slot, const std::string& data) {
 
 bool HMClient::NeedsOnlineLoad(int slot) {
     HMClient* instance = HMClient::Instance;
-
-    if (instance->GetLinkedSaves().size() <= slot) {
-        return false;
-    }
-
     LinkedSave& currentSave = instance->GetLinkedSaves().at(slot);
 
     if (!currentSave.id.empty()) {
@@ -432,7 +427,7 @@ void DrawLinkDeviceUI() {
             HMApi::LinkDevice(atoi(inputBuffer), type, version, GameID::OOT, std::string((char*)gBuildVersion), hwid);
 
         if (res.code != ResponseCodes::OK) {
-            SPDLOG_ERROR("{} {}", res.error, res.code);
+            SPDLOG_ERROR("Description: \"{}\" ResponseCode: {}", res.error, res.code);
             overlay->TextDrawNotification(15.0f, true, "Failed to link your device");
         } else {
             HMClient* instance = HMClient::Instance;

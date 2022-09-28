@@ -3,6 +3,10 @@
 #include <iostream>
 #include "../utils/picosha2.h"
 
+#ifdef __WIIU__
+#include <libultraship/WiiUImpl.h>
+#endif
+
 Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::string & device_version, GameID game_id, const std::string & game_version, const std::string & hardware_id) {
 
     std::vector<unsigned char> hash(picosha2::k_digest_size);
@@ -21,11 +25,9 @@ Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::stri
 		cpr::Header{{ "Content-Type", "application/json" }},
         cpr::Body{body.dump()}
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
-
-    printf("error: %s code %x\n", r.error.message.c_str(), r.error.code);
 
     if (r.status_code != ResponseCodes::OK) {
         bool isJson = r.header["Content-Type"] == "application/json";
@@ -41,7 +43,7 @@ Response HMApi::UnlinkDevice(const AuthSession& auth) {
     cpr::Response r = cpr::Delete(
         cpr::Url{ HM_ENDPOINT "/api/v1/unlink/" }
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
 
@@ -66,7 +68,7 @@ Response HMApi::RefreshUser(const AuthSession & auth) {
             { "authorization", body.dump() },
         }
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
 
@@ -85,7 +87,7 @@ Response HMApi::GetUser(const AuthSession & auth) {
             { "authorization", "Auth " + auth.access_token }
         }
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
 
@@ -112,7 +114,7 @@ Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::s
         },
         cpr::Header{{ "authorization", "Auth " + auth.access_token }}
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
 
@@ -147,7 +149,7 @@ Response HMApi::NewSave(const AuthSession& auth, const std::string& name, GameID
         },
         cpr::Body{ body.dump() }
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
 
@@ -185,7 +187,7 @@ Response HMApi::UploadSave(const AuthSession & auth, const std::string & name, c
         },
         cpr::Body{ body.dump() }
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
 
@@ -208,7 +210,7 @@ Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
             { "authorization", "Auth " + auth.access_token }
         }
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
 
@@ -233,7 +235,7 @@ Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
             { "authorization", "Auth " + auth.access_token }
         }
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
 
@@ -262,7 +264,7 @@ Response HMApi::LockSave(const AuthSession& auth, const std::string& id, const b
         },
         cpr::Body{body.dump()}
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
 
@@ -285,7 +287,7 @@ Response HMApi::GetSaveLock(const AuthSession& auth, const std::string& id) {
             { "authorization", "Auth " + auth.access_token }
         }
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
 
@@ -310,7 +312,7 @@ Response HMApi::UnlockAllSaves(const AuthSession& auth) {
             { "authorization", "Auth " + auth.access_token }
         }
 #ifdef __WIIU__
-        ,cpr::SslOptions({.ca_path = "/vol/storage_mlc01/sys/title/0005001b/10054000/content/scerts/"})
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
 

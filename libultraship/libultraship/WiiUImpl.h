@@ -10,7 +10,7 @@ void Init();
 
 void Exit();
 
-void ThrowMissingOTR(const char* otrPath);
+void ThrowMissingOTR(const char *otrPath);
 
 void Update();
 
@@ -18,9 +18,11 @@ VPADStatus *GetVPADStatus(VPADReadError *error);
 
 KPADStatus *GetKPADStatus(WPADChan chan, KPADError *error);
 
-const char* GetVersion();
+const char *GetVersion();
 
-const char* GetHWID();
+const char *GetHWID();
+
+const char *GetCAPath();
 
 };
 };
