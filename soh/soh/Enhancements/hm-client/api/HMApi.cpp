@@ -167,7 +167,7 @@ Response HMApi::NewSave(const AuthSession& auth, const std::string& name, GameID
 
 void HMApi::UploadSave(const AuthSession& auth, const std::string& name, const std::string& blob,
                                 GameID game_id, const std::string& rom_version, const std::string& game_version, int32_t version,
-                       Endianess endianess, std::function<void(Response&)> callback, const std::string& id) {
+                       Endianess endianess, std::function<void(cpr::Response r)> callback, const std::string& id) {
 
     std::vector<uint8_t> rawBlob(blob.begin(), blob.end());
 
@@ -185,12 +185,7 @@ void HMApi::UploadSave(const AuthSession& auth, const std::string& name, const s
         { "game_version", game_version },
     };
 
-    cpr::PutCallback(
-        [&](cpr::Response r) {
-            Response m;
-            ProcessResponse(m, r);
-            callback(m);
-        },
+    cpr::PutCallback(callback,
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id },
         cpr::Header{
             { "authorization", "Auth " + auth.access_token },
@@ -245,30 +240,13 @@ Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
     return Response{ ResponseCodes::OK };
 }
 
-void HMApi::LockSave(const AuthSession& auth, const std::string& id, const bool status, std::function<void(std::shared_ptr<Response>)> callback) {
+void HMApi::LockSave(const AuthSession& auth, const std::string& id, const bool status, std::function<void(cpr::Response r)> callback) {
     json body = {
         { "status", status }
     };
 
-    std::shared_ptr<std::function<void(std::shared_ptr<Response>)>> rawCallback =
-        std::make_shared<std::function<void(std::shared_ptr<Response>)>>(callback);
-
     cpr::PutCallback(
-        [&rawCallback](cpr::Response r) {
-            Response rm;
-            if (r.status_code != ResponseCodes::OK) {
-                bool isJson = r.header["Content-Type"] == "application/json";
-                rm.code = (ResponseCodes)r.status_code;
-                rm.error = isJson ? json::parse(r.text)["error"].get<std::string>() : r.text;
-            } else {
-                rm.code = ResponseCodes::OK;
-                rm.error = "NONE";
-                rm.data = r.text;
-            }
-
-            const std::function<void(std::shared_ptr<Response>)> sc = *rawCallback.get();
-            sc(std::make_shared<Response>(rm));
-        },
+        callback,
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/status/" + id },
         cpr::Header{ { "authorization", "Auth " + auth.access_token }, { "Content-Type", "application/json" } },
         cpr::Body{ body.dump() }, cpr::Timeout{ MAX_TIMEOUT }

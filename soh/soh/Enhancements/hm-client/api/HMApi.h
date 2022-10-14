@@ -3,6 +3,7 @@
 #include "HMTypes.h"
 #include "nlohmann/json.hpp"
 #include <functional>
+#include <cpr/response.h>
 
 using json = nlohmann::json;
 
@@ -26,10 +27,10 @@ public:
     static Response NewSave(const AuthSession& auth, const std::string& name, GameID game_id, const std::string& rom_version, const std::string& game_version, int32_t version);
     static void UploadSave(const AuthSession& auth, const std::string& name, const std::string& blob, GameID game_id,
                            const std::string& rom_version, const std::string& game_version, int32_t version,
-                           Endianess endianess, std::function<void(Response&)> callback, const std::string& id = "");
+                           Endianess endianess, std::function<void(cpr::Response r)> callback, const std::string& id = "");
     static Response LoadSave(const AuthSession& auth, const std::string& id);
     static void LockSave(const AuthSession& auth, const std::string& id, const bool status,
-                         std::function<void(std::shared_ptr<Response>)> callback);
+                         std::function<void(cpr::Response r)> callback);
     static Response GetSaveLock(const AuthSession& auth, const std::string& id);
     static Response UnlockAllSaves(const AuthSession& auth);
     static Response DeleteSave(const AuthSession& auth, const std::string& id);

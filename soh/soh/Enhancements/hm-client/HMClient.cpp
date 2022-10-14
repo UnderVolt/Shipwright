@@ -14,6 +14,7 @@
 #include <libultraship/Hooks.h>
 #include "soh/UIWidgets.hpp"
 #include <libultraship/Lib/ImGui/imgui_internal.h>
+#include <cpr/cprtypes.h>
 
 using json = nlohmann::json;
 
@@ -69,6 +70,18 @@ std::string popupError = "";
 char inputBuffer[CODE_BUFFER_SIZE] = "";
 char nameInputBuffer[NAME_BUFFER_SIZE] = "";
 
+// Async request handling
+
+static void HandleLockSave(cpr::Response r) {
+    if (r.status_code == ResponseCodes::TOKEN_EXPIRED) {
+        HMApi::RefreshUser(HMClient::Instance->GetSession());
+    }
+}
+
+static void HandleCloseGame() {
+    HMApi::UnlockAllSaves(HMClient::Instance->GetSession());
+}
+
 void HMClient::Init() {
 
     this->linkedSaves.resize(MAX_SLOTS);
@@ -122,7 +135,7 @@ void HMClient::Tick() {
     long long time = GetTimeMillis();
 
     if (currentSave.nextUpdateTime <= time) {
-        // HMApi::LockSave(this->session, currentSave.id, true, [](Response) {});
+        this->SetLockSave(currentSlot, true);
         currentSave.nextUpdateTime = time + 60 * 15 * 1000;
     }
 }
@@ -250,11 +263,7 @@ void HMClient::SetLockSave(int slot, bool status) {
         return;
     }
 
-    HMApi::LockSave(this->GetSession(), currentSave.id, status, [](std::shared_ptr<Response> r) {
-        if (r->code == ResponseCodes::TOKEN_EXPIRED) {
-            HMApi::RefreshUser(HMClient::Instance->GetSession());
-        }
-    });
+    HMApi::LockSave(this->GetSession(), currentSave.id, status, HandleLockSave);
 }
 
 void HMClient::BackupSave(LinkedSave& save, const std::string& data) {
@@ -279,9 +288,18 @@ void HMClient::UploadSave(int slot, const std::string& data) {
     Endianess little = Endianess::LITTLE;
 #endif
 
-    HMApi::UploadSave(this->session, currentSave.name, data, GameID::OOT, ROM_VERSION, std::string((char*)gBuildVersion), 1, little, [&currentSave](Response& res) {
-        if (res.code != ResponseCodes::OK) {
-            SPDLOG_ERROR(res.error);
+    HMApi::UploadSave(this->session, currentSave.name, data, GameID::OOT, ROM_VERSION, std::string((char*)gBuildVersion), 1, little, [&currentSave](cpr::Response res) {\
+
+        if (res.status_code == ResponseCodes::TOKEN_EXPIRED) {
+            HMApi::RefreshUser(HMClient::Instance->GetSession());
+            SohImGui::GetGameOverlay()->TextDrawNotification(
+                15.0f, true, "Failed to upload the save because you user expired, please try again");
+            return;
+        }
+
+        if (res.status_code != ResponseCodes::OK) {
+            bool isJson = res.header["Content-Type"] == "application/json";
+            SPDLOG_ERROR(isJson ? json::parse(res.text)["error"].get<std::string>() : res.text);
             SohImGui::GetGameOverlay()->TextDrawNotification(
                 15.0f, true, "Failed to upload the save you are in offline mode, please try again later");
             return;
@@ -699,15 +717,8 @@ void HMClient_Init(void) {
     InitHMClient();
     HMClient::Instance->Init();
 
-    Ship::RegisterHook<Ship::ExitGame>([] {
-        if (gSaveContext.fileNum >= 0 && gSaveContext.fileNum < MAX_SLOTS)
-            HMClient::Instance->SetLockSave(gSaveContext.fileNum, false);
-    });
-
-    Ship::RegisterHook<Ship::CrashGame>([] {
-        if (gSaveContext.fileNum >= 0 && gSaveContext.fileNum < MAX_SLOTS)
-            HMClient::Instance->SetLockSave(gSaveContext.fileNum, false);
-    });
+    Ship::RegisterHook<Ship::ExitGame> (HandleCloseGame);
+    Ship::RegisterHook<Ship::CrashGame>(HandleCloseGame);
 }
 
 void HMClient_SetLockSave(int slot, bool status) {
