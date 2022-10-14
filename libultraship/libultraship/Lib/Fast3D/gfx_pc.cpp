@@ -557,8 +557,8 @@ static bool gfx_texture_cache_lookup(int i, int tile) {
         texture_id = gfx_rapi->new_texture();
     }
 
-    it = gfx_texture_cache.map.insert(make_pair(key, TextureCacheValue())).first;
-    TextureCacheNode* node = &*it;
+   //  it = gfx_texture_cache.map.insert().first;
+    TextureCacheNode* node = new TextureCacheValue();
     node->second.texture_id = texture_id;
     node->second.lru_location = gfx_texture_cache.lru.insert(gfx_texture_cache.lru.end(), { it });
 

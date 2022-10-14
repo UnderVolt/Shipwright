@@ -372,7 +372,7 @@ void FileChoose_DrawNameEntry(GameState* thisx) {
             // place cursor on END button
             this->kbdY = 5;
             this->kbdX = 4;
-        } else if (CHECK_BTN_ALL(input->press.button, BTN_B)) {
+        } else if (CHECK_BTN_ALL(input->press.button, BTN_B) && !this->disableNameCancel) {
             if ((this->newFileNameCharCount == 7) && (filename[7] != 0x3E)) {
                 for (i = this->newFileNameCharCount; i < 7; i++) {
                     filename[i] = filename[i + 1];
@@ -464,6 +464,7 @@ void FileChoose_DrawNameEntry(GameState* thisx) {
                             CVar_SetS32("gNewFileDropped", 0);
                             this->nameBoxAlpha[this->buttonIndex] = this->nameAlpha[this->buttonIndex] = 200;
                             this->connectorAlpha[this->buttonIndex] = 255;
+                            this->disableNameCancel = false;
                             func_800AA000(300.0f, 0xB4, 0x14, 0x64);
                         } else {
                             Audio_PlaySoundGeneral(NA_SE_SY_FSEL_ERROR, &D_801333D4, 4, &D_801333E0, &D_801333E0,

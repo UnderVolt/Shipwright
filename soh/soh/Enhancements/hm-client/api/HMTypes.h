@@ -5,6 +5,8 @@
 #include <string>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <cpr/cprtypes.h>
+#include <functional>
 
 using json = nlohmann::json;
 
@@ -37,6 +39,7 @@ struct Response {
 struct LinkedSave {
     std::string id;
     std::string name;
+    long long nextUpdateTime;
 };
 
 struct AuthSession {
@@ -59,7 +62,7 @@ struct CloudSave {
     std::string id;
     std::string name;
     std::vector<uint8_t> blob;
-    std::string md5;
+    std::string hash;
     GameID game_id;
     std::string game_version;
     std::string rom_version;
@@ -85,4 +88,5 @@ void from_json(const json& j, AuthSession& auth);
 void from_json(const json& j, User& user);
 void from_json(const json& j, CloudSave& save);
 void from_json(const json& j, LinkedSave& save);
+
 #endif

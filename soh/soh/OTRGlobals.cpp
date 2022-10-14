@@ -455,6 +455,7 @@ extern "C" void Graph_StartFrame() {
         }
     }
 #endif
+    HMClient::Instance->Tick();
     OTRGlobals::Instance->context->StartFrame();
 }
 

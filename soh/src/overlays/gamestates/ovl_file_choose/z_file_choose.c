@@ -1857,13 +1857,27 @@ void FileChoose_FadeMainToSelect(GameState* thisx) {
     }
 }
 
-/**
- * Fade out the main menu elements to transition to select mode.
- * Update function for `SM_FADE_MAIN_TO_SELECT`
- */
 void FileChoose_SetupFileSlot(s16 slot) {
     if (slot >= 0 && slot < 3 && fileChooseContext != NULL)
         fileChooseContext->nameAlpha[slot] = 0xFF;
+}
+
+void FileChoose_ForceKeyboardSave(s16 slot) {
+    static u8 emptyName[] = { 0x3E, 0x3E, 0x3E, 0x3E, 0x3E, 0x3E, 0x3E, 0x3E };
+    fileChooseContext->buttonIndex = slot;
+    Audio_PlaySoundGeneral(NA_SE_SY_FSEL_DECIDE_L, &D_801333D4, 4, &D_801333E0, &D_801333E0, &D_801333E8);
+    fileChooseContext->configMode = CM_ROTATE_TO_NAME_ENTRY;
+    fileChooseContext->kbdButton = FS_KBD_BTN_NONE;
+    fileChooseContext->charPage = FS_CHAR_PAGE_ENG;
+    fileChooseContext->kbdX = 0;
+    fileChooseContext->kbdY = 0;
+    fileChooseContext->charIndex = 0;
+    fileChooseContext->charBgAlpha = 0;
+    fileChooseContext->newFileNameCharCount = 0;
+    fileChooseContext->nameEntryBoxPosX = 120;
+    fileChooseContext->nameEntryBoxAlpha = 0;
+    fileChooseContext->disableNameCancel = true;
+    memcpy(Save_GetSaveMetaInfo(fileChooseContext->buttonIndex)->playerName, &emptyName, 8);
 }
 
 /**
@@ -2342,7 +2356,7 @@ void FileChoose_Main(GameState* thisx) {
     FrameInterpolation_StopRecord();
 
     // do not draw controls text in the options menu
-    if ((this->configMode <= CM_NAME_ENTRY_TO_MAIN) || (this->configMode >= CM_UNUSED_DELAY)) {
+    if (!this->disableNameCancel && (this->configMode <= CM_NAME_ENTRY_TO_MAIN) || (this->configMode >= CM_UNUSED_DELAY)) {
         func_800944C4(this->state.gfxCtx);
 
         gDPSetCombineLERP(POLY_OPA_DISP++, PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0,
@@ -2357,6 +2371,7 @@ void FileChoose_Main(GameState* thisx) {
         gDPLoadTextureBlock(POLY_OPA_DISP++, controlsTextures[gSaveContext.language], G_IM_FMT_IA, G_IM_SIZ_8b, 144, 16,
                             0, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOMASK,
                             G_TX_NOLOD, G_TX_NOLOD);
+
         gSPTextureRectangle(POLY_OPA_DISP++, 0x0168, 0x0330, 0x03A8, 0x0370, G_TX_RENDERTILE, 0, 0, 0x0400, 0x0400);
     }
 
@@ -2466,6 +2481,7 @@ void FileChoose_InitContext(GameState* thisx) {
     this->stickYDir = this->inputTimerY = 0;
     this->kbdX = this->kbdY = this->charIndex = 0;
     this->kbdButton = FS_KBD_BTN_NONE;
+    this->disableNameCancel = false;
 
     this->windowColor[0] = 100;
     this->windowColor[1] = 150;

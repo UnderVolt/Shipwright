@@ -30,7 +30,7 @@
 #include "ichain.h"
 #include "regs.h"
 
-#if defined(__LP64__) 
+#if defined(__LP64__)
 #define _SOH64
 #endif
 
@@ -1369,6 +1369,7 @@ typedef struct {
     /* 0x1CAD2 */ s16 kbdY;
     /* 0x1CAD4 */ s16 newFileNameCharCount;
     /* 0x1CAD6 */ s16 unk_1CAD6[5];
+    /* 0x1CAE0 */ s8  disableNameCancel;
 } FileChooseContext; // size = 0x1CAE0
 
 typedef enum {
