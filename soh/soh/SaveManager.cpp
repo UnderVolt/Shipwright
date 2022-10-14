@@ -636,8 +636,7 @@ void SaveManager::LoadJsonFile(const std::string& data, int fileNum) {
                     // Unloadable sections aren't necessarily errors, they are probably mods that were unloaded
                     // TODO report in a more noticeable manner
                 #if !defined(__SWITCH__) && !defined(__linux__)
-                    SPDLOG_WARN("Save at slot {} contains unloadable section " +
-                                sectionName, fileNum);
+                    SPDLOG_WARN("Save at slot {} contains unloadable section {}", fileNum, sectionName);
                 #endif
                     continue;
                 }
@@ -648,8 +647,7 @@ void SaveManager::LoadJsonFile(const std::string& data, int fileNum) {
                     // save. Report the error so that the user can rectify the error.
                     // TODO report in a more noticeable manner
                 #if !defined(__SWITCH__) && !defined(__linux__)
-                    SPDLOG_ERROR("Save at slot {} contains section " + sectionName +
-                                 " with an unloadable version " + std::to_string(sectionVersion), fileNum);
+                    SPDLOG_ERROR("Save at slot {} contains section {} with an unloadable version {}", sectionName, fileNum, sectionVersion);
                 #endif
                     assert(false);
                     continue;
@@ -660,7 +658,7 @@ void SaveManager::LoadJsonFile(const std::string& data, int fileNum) {
             break;
         default:
         #if !defined(__SWITCH__) && !defined(__linux__)
-            SPDLOG_ERROR("Unrecognized save version " + std::to_string(saveBlock["version"].get<int>()) + " in slot {}", fileNum);
+            SPDLOG_ERROR("Unrecognized save version {} in slot {}", saveBlock["version"].get<int>(), fileNum);
         #endif
             assert(false);
             break;
