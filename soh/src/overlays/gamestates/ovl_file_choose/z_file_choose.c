@@ -1035,10 +1035,11 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
     s16 pad;
     Color_RGB8 Background_Color = { this->windowColor[0], this->windowColor[1], this->windowColor[2] };
 
-    char* gFileSelMQButtonTex       = ResourceMgr_LoadFileRaw("assets/textures/title_static/gFileSelMQButtonTex.ia16.png");
-    char* gFileSelRANDButtonTex     = ResourceMgr_LoadFileRaw("assets/textures/title_static/gFileSelRANDButtonTex.ia16.png");
-    char* gFileSelCLOUDButtonTex    = ResourceMgr_LoadFileRaw("assets/textures/title_static/gFileSelCLOUDButtonTex.ia16.png");
-    char* gFileSelCLOUDAltButtonTex = ResourceMgr_LoadFileRaw("assets/textures/title_static/gFileSelCLOUDAltButtonTex.ia16.png");
+    //CLOUDTODO: Fix this texture loading issues
+    char* gFileSelMQButtonTex       = ResourceMgr_LoadFileRaw("assets/textures/title_static/gFileSelMQButtonTex");
+    char* gFileSelRANDButtonTex     = ResourceMgr_LoadFileRaw("assets/textures/title_static/gFileSelRANDButtonTex");
+    char* gFileSelCLOUDButtonTex    = ResourceMgr_LoadFileRaw("assets/textures/title_static/gFileSelCLOUDButtonTex");
+    char* gFileSelCLOUDAltButtonTex = ResourceMgr_LoadFileRaw("assets/textures/title_static/gFileSelCLOUDAltButtonTex");
 
     OPEN_DISPS(this->state.gfxCtx);
 
@@ -1092,8 +1093,8 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
         const SaveFileMetaInfo* meta = Save_GetSaveMetaInfo(i);
 
         bool isCloudSave = HMClient_IsOnlineSave(i);
-        bool isRandSave  = true;
-        bool isMQSave    = meta->isMasterQuest;
+        bool isRandSave  = meta->randoSave;
+        bool isMQSave    = true;
 
         isActive = !FileChoose_IsSaveCompatible(Save_GetSaveMetaInfo(i));
 
@@ -1124,8 +1125,8 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
 
         if (isCloudSave && this->configMode < CM_ROTATE_TO_NAME_ENTRY) {
             gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, color.r, color.g, color.b, this->fileButtonAlpha[i]);
-            FileChoose_DrawTexture(this, isRandSave ? 276 : 231, 75 + (16 * i) - (this->buttonYOffsets[i]), 44,
-                                   16, isRandSave ? gFileSelCLOUDAltButtonTex : gFileSelCLOUDButtonTex);
+            FileChoose_DrawTexture(this, isRandSave || isMQSave ? 276 : 231, 75 + (16 * i) - (this->buttonYOffsets[i]), 44,
+                                   16, isRandSave || isMQSave ? gFileSelCLOUDAltButtonTex : gFileSelCLOUDButtonTex);
         }
 
         // draw connectors
