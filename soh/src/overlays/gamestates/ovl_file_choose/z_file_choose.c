@@ -1094,12 +1094,12 @@ void FileChoose_DrawWindowContents(GameState* thisx) {
 
         bool isCloudSave = HMClient_IsOnlineSave(i);
         bool isRandSave  = meta->randoSave;
-        bool isMQSave    = true;
+        bool isMQSave    = meta->isMasterQuest;
 
-        isActive = !FileChoose_IsSaveCompatible(Save_GetSaveMetaInfo(i));
+        isActive = !FileChoose_IsSaveCompatible(Save_GetSaveMetaInfo(i)) && meta->valid;
 
         Color_RGB8 defaultColor = { sWindowContentColors[isActive][0], sWindowContentColors[isActive][1], sWindowContentColors[isActive][2] };
-        Color_RGB8 color = !isActive || CVar_GetS32("gHudColors", 1) != 2 ? defaultColor : CVar_GetRGB("gCCFileChoosePrim", Background_Color);
+        Color_RGB8 color = CVar_GetS32("gHudColors", 1) != 2 || !isActive ? defaultColor : CVar_GetRGB("gCCFileChoosePrim", Background_Color);
 
         gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, color.r, color.g, color.b, this->fileButtonAlpha[i]);
         gDPLoadTextureBlock(POLY_OPA_DISP++, sFileButtonTextures[gSaveContext.language][i], G_IM_FMT_IA, G_IM_SIZ_16b,
@@ -1416,7 +1416,7 @@ void FileChoose_FadeMainToSelect(GameState* thisx) {
 
 void FileChoose_SetupFileSlot(s16 slot) {
     if (slot >= 0 && slot < 3 && fileChooseContext != NULL)
-        fileChooseContext->nameAlpha[slot] = 0xFF;
+        fileChooseContext->nameAlpha[slot] = fileChooseContext->fileButtonAlpha[slot] = fileChooseContext->nameBoxAlpha[slot] = 0xFF;
 }
 
 void FileChoose_ForceKeyboardSave(s16 slot) {
