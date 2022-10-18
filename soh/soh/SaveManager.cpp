@@ -128,7 +128,8 @@ void SaveManager::LoadRandomizerVersion1() {
 }
 
 void SaveManager::LoadRandomizerVersion2() {
-    if(!CVar_GetS32("gRandomizer", 0)) return;
+    if (!CVar_GetS32("gRandomizer", 0))
+        return;
 
     SaveManager::Instance->LoadArray("itemLocations", RC_MAX, [&](size_t i) {
         gSaveContext.itemLocations[i].check = RandomizerCheck(i);
@@ -141,9 +142,8 @@ void SaveManager::LoadRandomizerVersion2() {
         });
     });
 
-    SaveManager::Instance->LoadArray("seed", ARRAY_COUNT(gSaveContext.seedIcons), [&](size_t i) {
-        SaveManager::Instance->LoadData("", gSaveContext.seedIcons[i]);
-    });
+    SaveManager::Instance->LoadArray("seed", ARRAY_COUNT(gSaveContext.seedIcons),
+                                     [&](size_t i) { SaveManager::Instance->LoadData("", gSaveContext.seedIcons[i]); });
 
     SaveManager::Instance->LoadArray("randoSettings", RSK_MAX, [&](size_t i) {
         gSaveContext.randoSettings[i].key = RandomizerSettingKey(i);
@@ -197,79 +197,11 @@ void SaveManager::LoadRandomizerVersion2() {
     });
 }
 
-void SaveManager::LoadRandomizerVersion2() {
-    if(!CVar_GetS32("gRandomizer", 0)) return;
-
-    SaveManager::Instance->LoadArray("itemLocations", RC_MAX, [&](size_t i) {
-        gSaveContext.itemLocations[i].check = RandomizerCheck(i);
-        SaveManager::Instance->LoadStruct("", [&]() {
-            SaveManager::Instance->LoadData("rgID", gSaveContext.itemLocations[i].get.rgID);
-            SaveManager::Instance->LoadData("fakeRgID", gSaveContext.itemLocations[i].get.fakeRgID);
-            std::string trickName;
-            SaveManager::Instance->LoadData("trickName", trickName);
-            strncpy(gSaveContext.itemLocations[i].get.trickName, trickName.c_str(), MAX_TRICK_NAME_SIZE);
-        });
-    });
-
-    SaveManager::Instance->LoadArray("seed", ARRAY_COUNT(gSaveContext.seedIcons), [&](size_t i) {
-        SaveManager::Instance->LoadData("", gSaveContext.seedIcons[i]);
-    });
-
-    SaveManager::Instance->LoadArray("randoSettings", RSK_MAX, [&](size_t i) {
-        gSaveContext.randoSettings[i].key = RandomizerSettingKey(i);
-        SaveManager::Instance->LoadData("", gSaveContext.randoSettings[i].value);
-    });
-
-    SaveManager::Instance->LoadArray("hintLocations", ARRAY_COUNT(gSaveContext.hintLocations), [&](size_t i) {
-        SaveManager::Instance->LoadStruct("", [&]() {
-            SaveManager::Instance->LoadData("check", gSaveContext.hintLocations[i].check);
-            std::string hintText;
-            SaveManager::Instance->LoadData("hintText", hintText);
-            memcpy(gSaveContext.hintLocations[i].hintText, hintText.c_str(), hintText.length());
-        });
-    });
-
-    std::string childAltarText;
-    SaveManager::Instance->LoadData("childAltarText", childAltarText);
-    memcpy(gSaveContext.childAltarText, childAltarText.c_str(), childAltarText.length());
-    std::string adultAltarText;
-    SaveManager::Instance->LoadData("adultAltarText", adultAltarText);
-    memcpy(gSaveContext.adultAltarText, adultAltarText.c_str(), adultAltarText.length());
-    std::string ganonHintText;
-    SaveManager::Instance->LoadData("ganonHintText", ganonHintText);
-    memcpy(gSaveContext.ganonHintText, ganonHintText.c_str(), ganonHintText.length());
-    std::string ganonText;
-    SaveManager::Instance->LoadData("ganonText", ganonText);
-    memcpy(gSaveContext.ganonText, ganonText.c_str(), ganonText.length());
-
-    SaveManager::Instance->LoadData("adultTradeItems", gSaveContext.adultTradeItems);
-
-    SaveManager::Instance->LoadData("pendingIceTrapCount", gSaveContext.pendingIceTrapCount);
-
-    std::shared_ptr<Randomizer> randomizer = OTRGlobals::Instance->gRandomizer;
-
-    size_t merchantPricesSize = 0;
-    if (randomizer->GetRandoSettingValue(RSK_SHUFFLE_SCRUBS) > 0) {
-        merchantPricesSize += NUM_SCRUBS;
-    }
-    if (randomizer->GetRandoSettingValue(RSK_SHOPSANITY) > 0) {
-        merchantPricesSize += NUM_SHOP_ITEMS;
-    }
-
-    SaveManager::Instance->LoadArray("merchantPrices", merchantPricesSize, [&](size_t i) {
-        SaveManager::Instance->LoadStruct("", [&]() {
-            RandomizerCheck rc;
-            SaveManager::Instance->LoadData("check", rc);
-            uint32_t price;
-            SaveManager::Instance->LoadData("price", price);
-            randomizer->merchantPrices[rc] = price;
-        });
-    });
-}
 
 void SaveManager::SaveRandomizer() {
 
-    if(!gSaveContext.n64ddFlag) return;
+    if (!gSaveContext.n64ddFlag)
+        return;
 
     SaveManager::Instance->SaveArray("itemLocations", RC_MAX, [&](size_t i) {
         SaveManager::Instance->SaveStruct("", [&]() {
@@ -279,9 +211,8 @@ void SaveManager::SaveRandomizer() {
         });
     });
 
-    SaveManager::Instance->SaveArray("seed", ARRAY_COUNT(gSaveContext.seedIcons), [&](size_t i) {
-        SaveManager::Instance->SaveData("", gSaveContext.seedIcons[i]);
-    });
+    SaveManager::Instance->SaveArray("seed", ARRAY_COUNT(gSaveContext.seedIcons),
+                                     [&](size_t i) { SaveManager::Instance->SaveData("", gSaveContext.seedIcons[i]); });
 
     SaveManager::Instance->SaveArray("randoSettings", RSK_MAX, [&](size_t i) {
         SaveManager::Instance->SaveData("", gSaveContext.randoSettings[i].value);
@@ -306,7 +237,7 @@ void SaveManager::SaveRandomizer() {
     std::shared_ptr<Randomizer> randomizer = OTRGlobals::Instance->gRandomizer;
 
     std::vector<std::pair<RandomizerCheck, u16>> merchantPrices;
-    for (const auto & [ check, price ] : randomizer->merchantPrices) {
+    for (const auto& [check, price] : randomizer->merchantPrices) {
         merchantPrices.push_back(std::make_pair(check, price));
     }
 
