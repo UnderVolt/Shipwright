@@ -762,8 +762,9 @@ void SaveManager::LoadJsonFile(const std::string& data, int fileNum) {
                 if (!sectionLoadHandlers.contains(sectionName)) {
                     // Unloadable sections aren't necessarily errors, they are probably mods that were unloaded
                     // TODO report in a more noticeable manner
-                #if !defined(__SWITCH__) && !defined(__linux__)
-                    SPDLOG_WARN("Save at slot {} contains unloadable section {}", fileNum, sectionName);
+                #if !defined(__SWITCH__) && !defined(__linux__) && !defined(__WIIU__)
+                    SPDLOG_WARN("Save at slot {} contains unloadable section " +
+                                sectionName, fileNum);
                 #endif
                     continue;
                 }
@@ -773,8 +774,9 @@ void SaveManager::LoadJsonFile(const std::string& data, int fileNum) {
                     // mod at an earlier version than the save has. In this case, the user probably wants to load the
                     // save. Report the error so that the user can rectify the error.
                     // TODO report in a more noticeable manner
-                #if !defined(__SWITCH__) && !defined(__linux__)
-                    SPDLOG_ERROR("Save at slot {} contains section {} with an unloadable version {}", sectionName, fileNum, sectionVersion);
+                #if !defined(__SWITCH__) && !defined(__linux__) && !defined(__WIIU__)
+                    SPDLOG_ERROR("Save at slot {} contains section " + sectionName +
+                                 " with an unloadable version " + std::to_string(sectionVersion), fileNum);
                 #endif
                     assert(false);
                     continue;
@@ -784,8 +786,8 @@ void SaveManager::LoadJsonFile(const std::string& data, int fileNum) {
             }
             break;
         default:
-        #if !defined(__SWITCH__) && !defined(__linux__)
-            SPDLOG_ERROR("Unrecognized save version {} in slot {}", saveBlock["version"].get<int>(), fileNum);
+        #if !defined(__SWITCH__) && !defined(__linux__) && !defined(__WIIU__)
+            SPDLOG_ERROR("Unrecognized save version " + std::to_string(saveBlock["version"].get<int>()) + " in slot {}", fileNum);
         #endif
             assert(false);
             break;

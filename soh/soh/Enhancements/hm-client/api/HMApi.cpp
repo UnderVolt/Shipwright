@@ -4,20 +4,11 @@
 #include <future>
 #include "../utils/picosha2.h"
 
+#ifdef __WIIU__
+#include <libultraship/WiiUImpl.h>
+#endif
+
 #define MAX_TIMEOUT 10 * 1000
-
-void ProcessResponse(Response& rm, cpr::Response r) {
-    if (r.status_code != ResponseCodes::OK) {
-        bool isJson = r.header["Content-Type"] == "application/json";
-        rm.code = (ResponseCodes)r.status_code;
-        rm.error = isJson ? json::parse(r.text)["error"].get<std::string>() : r.text;
-        return;
-    }
-
-    rm.code = ResponseCodes::OK;
-    rm.error = "NONE";
-    rm.data = r.text;
-}
 
 Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::string & device_version, GameID game_id, const std::string & game_version, const std::string & hardware_id) {
 
@@ -37,6 +28,9 @@ Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::stri
 		cpr::Header{{ "Content-Type", "application/json" }},
         cpr::Body{body.dump()},
         cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 
     if (r.status_code != ResponseCodes::OK) {
@@ -53,6 +47,9 @@ Response HMApi::UnlinkDevice(const AuthSession& auth) {
     cpr::Response r = cpr::Delete(
         cpr::Url{ HM_ENDPOINT "/api/v1/unlink/" },
         cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 
     if (r.status_code != ResponseCodes::OK) {
@@ -76,6 +73,9 @@ Response HMApi::RefreshUser(const AuthSession & auth) {
             { "authorization", body.dump() },
         },
         cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 
     if (r.status_code != ResponseCodes::OK) {
@@ -93,6 +93,9 @@ Response HMApi::GetUser(const AuthSession & auth) {
             { "authorization", "Auth " + auth.access_token }
         },
         cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -118,6 +121,9 @@ Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::s
         },
         cpr::Header{{ "authorization", "Auth " + auth.access_token }},
         cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -151,6 +157,9 @@ Response HMApi::NewSave(const AuthSession& auth, const std::string& name, GameID
         },
         cpr::Body{ body.dump() },
         cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -193,6 +202,9 @@ void HMApi::UploadSave(const AuthSession& auth, const std::string& name, const s
         },
         cpr::Body{ body.dump() },
         cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 }
 
@@ -203,6 +215,9 @@ Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
             { "authorization", "Auth " + auth.access_token }
         },
         cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -226,6 +241,9 @@ Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
             { "authorization", "Auth " + auth.access_token }
         },
         cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -250,6 +268,9 @@ void HMApi::LockSave(const AuthSession& auth, const std::string& id, const bool 
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/status/" + id },
         cpr::Header{ { "authorization", "Auth " + auth.access_token }, { "Content-Type", "application/json" } },
         cpr::Body{ body.dump() }, cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 }
 
@@ -260,6 +281,9 @@ Response HMApi::GetSaveLock(const AuthSession& auth, const std::string& id) {
             { "authorization", "Auth " + auth.access_token }
         },
         cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
@@ -283,6 +307,9 @@ Response HMApi::UnlockAllSaves(const AuthSession& auth) {
             { "authorization", "Auth " + auth.access_token }
         },
         cpr::Timeout{ MAX_TIMEOUT }
+#ifdef __WIIU__
+        ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
+#endif
     );
 
     if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
