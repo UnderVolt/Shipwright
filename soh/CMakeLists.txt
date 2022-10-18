@@ -2052,6 +2052,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
         "libultraship;"
         "ZAPDUtils;"
         cpr::cpr
+        "curl;mbedtls;mbedcrypto;mbedx509;"
         SDL2::SDL2-static
 
         "$<$<CONFIG:Debug>:-Wl,--wrap=abort>"
@@ -2059,6 +2060,10 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     target_include_directories(${PROJECT_NAME} PRIVATE
         ${DEVKITPRO}/portlibs/wiiu/include/
     )
+
+    # use curl + mbedtls from pacman packages
+    set(CPR_USE_SYSTEM_CURL TRUE)
+    set(CPR_FORCE_MBEDTLS_BACKEND TRUE)
 else()
     find_package(SDL2)
     set(THREADS_PREFER_PTHREAD_FLAG ON)

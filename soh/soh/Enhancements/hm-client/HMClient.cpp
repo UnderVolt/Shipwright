@@ -38,6 +38,8 @@ using json = nlohmann::json;
 #include <unistd.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
+#elif __WIIU__
+#include <libultraship/WiiUImpl.h>
 #endif
 
 #define MAX_SLOTS 3
@@ -285,10 +287,10 @@ void HMClient::UploadSave(int slot, const std::string& data) {
 #if (defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) || defined(__BIG_ENDIAN__)
     Endianess endian = Endianess::BIG;
 #else
-    Endianess little = Endianess::LITTLE;
+    Endianess endian = Endianess::LITTLE;
 #endif
 
-    HMApi::UploadSave(this->session, currentSave.name, data, GameID::OOT, ROM_VERSION, std::string((char*)gBuildVersion), 1, little, [&currentSave](cpr::Response res) {\
+    HMApi::UploadSave(this->session, currentSave.name, data, GameID::OOT, ROM_VERSION, std::string((char*)gBuildVersion), 1, endian, [&currentSave](cpr::Response res) {\
 
         if (res.status_code == ResponseCodes::TOKEN_EXPIRED) {
             HMApi::RefreshUser(HMClient::Instance->GetSession());
@@ -484,6 +486,8 @@ void DrawLinkDeviceUI() {
         std::string hwid    = std::string(uuid_string);
 #elif defined(__WIIU__)
         DeviceType type = DeviceType::WII_U;
+        std::string version = std::string(Ship::WiiU::GetVersion());
+        std::string hwid    = std::string(Ship::WiiU::GetHWID());
 #else
 #error "Unsupported platform!"
 #endif
@@ -492,7 +496,7 @@ void DrawLinkDeviceUI() {
             HMApi::LinkDevice(atoi(inputBuffer), type, version, GameID::OOT, std::string((char*)gBuildVersion), hwid);
 
         if (res.code != ResponseCodes::OK) {
-            SPDLOG_ERROR(res.error);
+            SPDLOG_ERROR("Description: \"{}\" ResponseCode: {}", res.error, res.code);
             overlay->TextDrawNotification(15.0f, true, "Failed to link your device");
         } else {
             HMClient* instance = HMClient::Instance;
