@@ -9,10 +9,12 @@
 #include "Utils/StringHelper.h"
 #include "variables.h"
 #include <codecvt>
+#include <fstream>
 #include "../../SaveManager.h"
 #include <libultraship/Hooks.h>
 #include "soh/UIWidgets.hpp"
 #include <libultraship/Lib/ImGui/imgui_internal.h>
+#include <cpr/cprtypes.h>
 
 using json = nlohmann::json;
 
@@ -57,7 +59,8 @@ extern "C" {
 #include "variables.h"
 #include "functions.h"
 #include "macros.h"
-extern "C" void FileChoose_SetupFileSlot(s16 slot);
+void FileChoose_SetupFileSlot(s16 slot);
+void FileChoose_ForceKeyboardSave(s16 slot);
 extern GlobalContext* gGlobalCtx;
 }
 
@@ -68,6 +71,18 @@ bool canEditSaves = true;
 std::string popupError = "";
 char inputBuffer[CODE_BUFFER_SIZE] = "";
 char nameInputBuffer[NAME_BUFFER_SIZE] = "";
+
+// Async request handling
+
+static void HandleLockSave(cpr::Response r) {
+    if (r.status_code == ResponseCodes::TOKEN_EXPIRED) {
+        HMApi::RefreshUser(HMClient::Instance->GetSession());
+    }
+}
+
+static void HandleCloseGame() {
+    HMApi::UnlockAllSaves(HMClient::Instance->GetSession());
+}
 
 void HMClient::Init() {
 
@@ -104,6 +119,26 @@ void HMClient::Init() {
             const std::string data(save->blob.begin(), save->blob.end());
             sm->LoadJsonFile(data, linkId);
         }
+    }
+}
+
+void HMClient::Tick() {
+
+    int32_t currentSlot = gSaveContext.fileNum;
+
+    if (currentSlot < 0 || currentSlot > 2)
+        return;
+
+    LinkedSave& currentSave = this->GetLinkedSaves().at(currentSlot);
+
+    if (currentSave.id.empty())
+        return;
+
+    long long time = GetTimeMillis();
+
+    if (currentSave.nextUpdateTime <= time) {
+        this->SetLockSave(currentSlot, true);
+        currentSave.nextUpdateTime = time + 60 * 15 * 1000;
     }
 }
 
@@ -170,6 +205,7 @@ void HMClient::LoadSave(int slot) {
     }
 
     const std::string data(save->blob.begin(), save->blob.end());
+    link.nextUpdateTime = GetTimeMillis() + 60 * 15 * 1000;
     sm->LoadJsonFile(data, slot);
 }
 
@@ -229,7 +265,11 @@ void HMClient::SetLockSave(int slot, bool status) {
         return;
     }
 
-    HMApi::LockSave(this->GetSession(), currentSave.id, status);
+    HMApi::LockSave(this->GetSession(), currentSave.id, status, HandleLockSave);
+}
+
+void HMClient::BackupSave(LinkedSave& save, const std::string& data) {
+    WriteSaveFile(StringHelper::Sprintf("backups/%s.bkp", save.id.c_str()), data);
 }
 
 void HMClient::UploadSave(int slot, const std::string& data) {
@@ -250,16 +290,29 @@ void HMClient::UploadSave(int slot, const std::string& data) {
     Endianess endian = Endianess::LITTLE;
 #endif
 
-    const Response res = HMApi::UploadSave(this->session, currentSave.name, data, GameID::OOT, ROM_VERSION,
-                                           std::string((char*)gBuildVersion), 1, endian, currentSave.id);
+    HMApi::UploadSave(this->session, currentSave.name, data, GameID::OOT, ROM_VERSION, std::string((char*)gBuildVersion), 1, endian, [&currentSave](cpr::Response res) {\
 
-    if (res.code != ResponseCodes::OK) {
-        SPDLOG_ERROR(res.error);
-        SohImGui::GetGameOverlay()->TextDrawNotification(15.0f, true, "Failed to upload the save you are in offline mode, please try again later");
-        return;
-    }
+        if (res.status_code == ResponseCodes::TOKEN_EXPIRED) {
+            HMApi::RefreshUser(HMClient::Instance->GetSession());
+            SohImGui::GetGameOverlay()->TextDrawNotification(
+                15.0f, true, "Failed to upload the save because you user expired, please try again");
+            return;
+        }
 
-    SPDLOG_INFO("Successfully uploaded save!");
+        if (res.status_code != ResponseCodes::OK) {
+            bool isJson = res.header["Content-Type"] == "application/json";
+            SPDLOG_ERROR(isJson ? json::parse(res.text)["error"].get<std::string>() : res.text);
+            SohImGui::GetGameOverlay()->TextDrawNotification(
+                15.0f, true, "Failed to upload the save you are in offline mode, please try again later");
+            return;
+        }
+
+        currentSave.nextUpdateTime = GetTimeMillis() + 60 * 15 * 1000;
+
+        SPDLOG_INFO("Successfully uploaded save!");
+            SohImGui::GetGameOverlay()->TextDrawNotification(
+                15.0f, true, "Successfully uploaded save!");
+    }, currentSave.id);
 }
 
 bool HMClient::CanLoadSave(int slot) {
@@ -320,6 +373,22 @@ bool HMClient::NeedsOnlineLoad(int slot) {
     }
 
     return false;
+}
+
+void WriteSaveFile(const std::string& path, const std::string& data) {
+#ifdef __SWITCH__
+    const char* json_string = data.c_str();
+    FILE* w = fopen(path.c_str(), "w");
+    fwrite(json_string, sizeof(char), strlen(json_string), w);
+    fclose(w);
+#else
+    std::ofstream output(path);
+#ifdef __WIIU__
+    alignas(0x40) char buffer[8192];
+    output.rdbuf()->pubsetbuf(buffer, sizeof(buffer));
+#endif
+    output << std::setw(4) << data << std::endl;
+#endif
 }
 
 void DrawLinkDeviceUI() {
@@ -392,7 +461,7 @@ void DrawLinkDeviceUI() {
         DeviceType type = DeviceType::MAC;
         char str[256];
         size_t size = sizeof(str);
-        int ret = sysctlbyname("kern.osrelease", str, &size, NULL, 0);
+        int ret = sysctlbyname("kern.osproductversion", str, &size, NULL, 0);
         printf("%s\n", str);
 
         // unique machine identifier
@@ -568,6 +637,7 @@ void DrawNewSaveUI(){
                     std::string saveId = std::any_cast<std::string>(res.data);
                     currentSave.id = saveId;
                     currentSave.name = saveName;
+                    FileChoose_ForceKeyboardSave(selectedSlot);
                     instance->GetSaves().push_back({ .id = saveId, .name = saveName });
                 }
 
@@ -651,15 +721,8 @@ void HMClient_Init(void) {
     InitHMClient();
     HMClient::Instance->Init();
 
-    Ship::RegisterHook<Ship::ExitGame>([] {
-        if (gSaveContext.fileNum >= 0 && gSaveContext.fileNum < MAX_SLOTS)
-            HMClient::Instance->SetLockSave(gSaveContext.fileNum, false);
-    });
-
-    Ship::RegisterHook<Ship::CrashGame>([] {
-        if (gSaveContext.fileNum >= 0 && gSaveContext.fileNum < MAX_SLOTS)
-            HMClient::Instance->SetLockSave(gSaveContext.fileNum, false);
-    });
+    Ship::RegisterHook<Ship::ExitGame> (HandleCloseGame);
+    Ship::RegisterHook<Ship::CrashGame>(HandleCloseGame);
 }
 
 void HMClient_SetLockSave(int slot, bool status) {

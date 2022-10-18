@@ -203,6 +203,7 @@ void FileChoose_DrawOptions(GameState* thisx);
 void FileChoose_DrawNameEntry(GameState* thisx);
 void FileChoose_DrawCharacter(GraphicsContext* gfxCtx, void* texture, s16 vtx);
 void FileChoose_SetupFileSlot(s16 slot);
+void FileChoose_ForceKeyboardSave(s16 slot);
 
 void HandleMouseInput(Input* input);
 u8 HandleMouseCursor(FileChooseContext* this, Input* input, int minx, int miny, int maxx, int maxy);

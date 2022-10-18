@@ -3,12 +3,14 @@
 #ifdef __cplusplus
 
 #include <vector>
+#include <chrono>
 #include "api/HMTypes.h"
 
 class HMClient {
 public:
     static HMClient* Instance;
     void Init();
+    void Tick();
     void Save(const AuthSession& auth);
     void FetchData(const bool save = false);
 
@@ -17,10 +19,17 @@ public:
     void ResetSave(int slot);
     bool CanLoadSave(int slot);
     void UploadSave(int slot, const std::string& data);
+    void BackupSave(LinkedSave& save, const std::string& data);
     void SetLockSave(int slot, bool status);
 
     static bool NeedsOnlineSave(int slot, const std::string& data);
     static bool NeedsOnlineLoad(int slot);
+
+    static long long GetTimeMillis() {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()
+        ).count() % 1000;
+    }
 
     void SetMaxSlots(int32_t slots) {
         this->linkedSaves.resize(slots);
@@ -64,6 +73,8 @@ public:
     std::vector<CloudSave> saves;
     std::vector<LinkedSave> linkedSaves;
 };
+
+void WriteSaveFile(const std::string& path, const std::string& data);
 
 extern "C" {
 #endif

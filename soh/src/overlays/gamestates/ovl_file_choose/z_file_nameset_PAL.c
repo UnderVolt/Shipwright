@@ -114,6 +114,7 @@ void FileChoose_SetNameEntryVtx(GameState* thisx) {
     u8 temp;
     s16 phi_v0;
     char* filename = Save_GetSaveMetaInfo(this->buttonIndex)->playerName;
+    Color_RGB8 Background_Color = { this->windowColor[0], this->windowColor[1], this->windowColor[2] };
 
     OPEN_DISPS(this->state.gfxCtx);
 
@@ -133,8 +134,9 @@ void FileChoose_SetNameEntryVtx(GameState* thisx) {
     for (phi_t1 = 0; phi_t1 < 2; phi_t1++, phi_s0 += 4) {
 
         if (CVar_GetS32("gHudColors", 1) == 2) {
-            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetS32("gCCFileChoosePrimR", 100), CVar_GetS32("gCCFileChoosePrimG", 150),
-                            CVar_GetS32("gCCFileChoosePrimB", 255), 255);
+            gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetRGB("gCCFileChoosePrim", Background_Color).r,
+                            CVar_GetRGB("gCCFileChoosePrim", Background_Color).g,
+                            CVar_GetRGB("gCCFileChoosePrim", Background_Color).b, 255);
         } else {
             gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, this->windowColor[0], this->windowColor[1], this->windowColor[2],
                             255);
@@ -202,8 +204,9 @@ void FileChoose_SetNameEntryVtx(GameState* thisx) {
                       ENVIRONMENT, TEXEL0, ENVIRONMENT, TEXEL0, 0, PRIMITIVE, 0);
 
     if (CVar_GetS32("gHudColors", 1) == 2) {
-        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetS32("gCCFileChoosePrimR", 100),
-                        CVar_GetS32("gCCFileChoosePrimG", 150), CVar_GetS32("gCCFileChoosePrimB", 255),
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetRGB("gCCFileChoosePrim", Background_Color).r,
+                        CVar_GetRGB("gCCFileChoosePrim", Background_Color).g,
+                        CVar_GetRGB("gCCFileChoosePrim", Background_Color).b,
                         this->nameEntryBoxAlpha);
     } else {
         gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, this->windowColor[0], this->windowColor[1], this->windowColor[2],
@@ -279,6 +282,7 @@ void FileChoose_DrawNameEntry(GameState* thisx) {
     u16 dayTime;
     s16 validName;
     char* filename = Save_GetSaveMetaInfo(this->buttonIndex)->playerName;
+    Color_RGB8 Background_Color = { this->windowColor[0], this->windowColor[1], this->windowColor[2] };
 
     OPEN_DISPS(this->state.gfxCtx);
 
@@ -332,8 +336,9 @@ void FileChoose_DrawNameEntry(GameState* thisx) {
                       PRIMITIVE, 0);
 
     if (CVar_GetS32("gHudColors", 1) == 2) {
-        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetS32("gCCFileChoosePrimR", 100),
-                        CVar_GetS32("gCCFileChoosePrimG", 150), CVar_GetS32("gCCFileChoosePrimB", 255),
+        gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, CVar_GetRGB("gCCFileChoosePrim", Background_Color).r,
+                        CVar_GetRGB("gCCFileChoosePrim", Background_Color).g,
+                        CVar_GetRGB("gCCFileChoosePrim", Background_Color).b,
                         this->highlightColor[3]);
     } else {
         gDPSetPrimColor(POLY_OPA_DISP++, 0, 0, this->highlightColor[0], this->highlightColor[1],
@@ -372,7 +377,7 @@ void FileChoose_DrawNameEntry(GameState* thisx) {
             // place cursor on END button
             this->kbdY = 5;
             this->kbdX = 4;
-        } else if (CHECK_BTN_ALL(input->press.button, BTN_B)) {
+        } else if (CHECK_BTN_ALL(input->press.button, BTN_B) && !this->disableNameCancel) {
             if ((this->newFileNameCharCount == 7) && (filename[7] != 0x3E)) {
                 for (i = this->newFileNameCharCount; i < 7; i++) {
                     filename[i] = filename[i + 1];
@@ -464,6 +469,7 @@ void FileChoose_DrawNameEntry(GameState* thisx) {
                             CVar_SetS32("gNewFileDropped", 0);
                             this->nameBoxAlpha[this->buttonIndex] = this->nameAlpha[this->buttonIndex] = 200;
                             this->connectorAlpha[this->buttonIndex] = 255;
+                            this->disableNameCancel = false;
                             func_800AA000(300.0f, 0xB4, 0x14, 0x64);
                         } else {
                             Audio_PlaySoundGeneral(NA_SE_SY_FSEL_ERROR, &D_801333D4, 4, &D_801333E0, &D_801333E0,

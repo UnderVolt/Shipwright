@@ -6,6 +6,8 @@
 #include "soh/Enhancements/gameconsole.h"
 #include <libultraship/ImGuiImpl.h>
 #include "soh/frame_interpolation.h"
+#include "soh/Enhancements/debugconsole.h"
+#include <overlays/actors/ovl_En_Niw/z_en_niw.h>
 
 #include <time.h>
 
@@ -1544,6 +1546,10 @@ void Gameplay_Main(GameState* thisx) {
 
 }
 
+u8 PlayerGrounded(Player* player) {
+    return player->actor.bgCheckFlags & 1;
+}
+
 // original name: "Game_play_demo_mode_check"
 s32 Gameplay_InCsMode(GlobalContext* globalCtx) {
     return (globalCtx->csCtx.state != CS_STATE_IDLE) || Player_InCsMode(globalCtx);
@@ -2000,7 +2006,7 @@ s32 func_800C0DB4(GlobalContext* globalCtx, Vec3f* pos) {
 }
 
 void Gameplay_PerformSave(GlobalContext* globalCtx) {
-    if (globalCtx != NULL) {
+    if (globalCtx != NULL && gSaveContext.fileNum != 0xFF) {
         Gameplay_SaveSceneFlags(globalCtx);
         gSaveContext.savedSceneNum = globalCtx->sceneNum;
         if (gSaveContext.temporaryWeapon) {

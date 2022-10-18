@@ -44,6 +44,7 @@ void OTRGetPixelDepthPrepare(float x, float y);
 uint16_t OTRGetPixelDepth(float x, float y);
 int32_t OTRGetLastScancode();
 uint32_t ResourceMgr_GetGameVersion();
+uint32_t ResourceMgr_IsGameMasterQuest();
 void ResourceMgr_CacheDirectory(const char* resName);
 char** ResourceMgr_ListFiles(const char* searchMask, int* resultSize);
 void ResourceMgr_LoadFile(const char* resName);
@@ -59,7 +60,8 @@ AnimationHeaderCommon* ResourceMgr_LoadAnimByName(const char* path);
 char* ResourceMgr_GetNameByCRC(uint64_t crc, char* alloc);
 Gfx* ResourceMgr_LoadGfxByCRC(uint64_t crc);
 Gfx* ResourceMgr_LoadGfxByName(const char* path);
-Gfx* ResourceMgr_PatchGfxByName(const char* path, int size);
+void ResourceMgr_PatchGfxByName(const char* path, const char* patchName, int index, Gfx instruction);
+void ResourceMgr_UnpatchGfxByName(const char* path, const char* patchName);
 char* ResourceMgr_LoadArrayByNameAsVec3s(const char* path);
 Vtx* ResourceMgr_LoadVtxByCRC(uint64_t crc);
 

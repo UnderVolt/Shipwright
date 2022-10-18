@@ -1,11 +1,14 @@
 #include "HMApi.h"
 #include <cpr/cpr.h>
 #include <iostream>
+#include <future>
 #include "../utils/picosha2.h"
 
 #ifdef __WIIU__
 #include <libultraship/WiiUImpl.h>
 #endif
+
+#define MAX_TIMEOUT 10 * 1000
 
 Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::string & device_version, GameID game_id, const std::string & game_version, const std::string & hardware_id) {
 
@@ -23,7 +26,8 @@ Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::stri
     cpr::Response r = cpr::Post(
         cpr::Url{ HM_ENDPOINT "/api/v1/link/" + std::to_string(code) },
 		cpr::Header{{ "Content-Type", "application/json" }},
-        cpr::Body{body.dump()}
+        cpr::Body{body.dump()},
+        cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
@@ -41,7 +45,8 @@ Response HMApi::LinkDevice(int32_t code, DeviceType device_type, const std::stri
 
 Response HMApi::UnlinkDevice(const AuthSession& auth) {
     cpr::Response r = cpr::Delete(
-        cpr::Url{ HM_ENDPOINT "/api/v1/unlink/" }
+        cpr::Url{ HM_ENDPOINT "/api/v1/unlink/" },
+        cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
@@ -66,7 +71,8 @@ Response HMApi::RefreshUser(const AuthSession & auth) {
         cpr::Url{ HM_ENDPOINT "/api/v1/auth/refresh" },
         cpr::Header{
             { "authorization", body.dump() },
-        }
+        },
+        cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
@@ -85,7 +91,8 @@ Response HMApi::GetUser(const AuthSession & auth) {
         cpr::Url{ HM_ENDPOINT "/api/v1/auth/me" },
         cpr::Header{
             { "authorization", "Auth " + auth.access_token }
-        }
+        },
+        cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
@@ -112,7 +119,8 @@ Response HMApi::ListSaves(const AuthSession & auth, GameID game_id, const std::s
             { "game_id", i_games.at(game_id) },
             { "rom_version", rom_version }
         },
-        cpr::Header{{ "authorization", "Auth " + auth.access_token }}
+        cpr::Header{{ "authorization", "Auth " + auth.access_token }},
+        cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
@@ -147,7 +155,8 @@ Response HMApi::NewSave(const AuthSession& auth, const std::string& name, GameID
             { "authorization", "Auth " + auth.access_token },
             { "Content-Type", "application/json" }
         },
-        cpr::Body{ body.dump() }
+        cpr::Body{ body.dump() },
+        cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
@@ -165,12 +174,18 @@ Response HMApi::NewSave(const AuthSession& auth, const std::string& name, GameID
     return Response{ ResponseCodes::OK, "NONE", r.text };
 }
 
-Response HMApi::UploadSave(const AuthSession & auth, const std::string & name, const std::string & blob, GameID game_id, const std::string & rom_version, const std::string & game_version, int32_t version, Endianess endianess, const std::string& id) {
+void HMApi::UploadSave(const AuthSession& auth, const std::string& name, const std::string& blob,
+                                GameID game_id, const std::string& rom_version, const std::string& game_version, int32_t version,
+                       Endianess endianess, std::function<void(cpr::Response r)> callback, const std::string& id) {
 
     std::vector<uint8_t> rawBlob(blob.begin(), blob.end());
 
+    std::vector<unsigned char> hash(picosha2::k_digest_size);
+    picosha2::hash256(blob.begin(), blob.end(), hash.begin(), hash.end());
+
     json body = {
         { "name", name },
+        { "hash", picosha2::bytes_to_hex_string(hash.begin(), hash.end()) },
         { "blob", rawBlob },
         { "game_id", i_games.at(game_id) },
         { "version", version },
@@ -179,28 +194,18 @@ Response HMApi::UploadSave(const AuthSession & auth, const std::string & name, c
         { "game_version", game_version },
     };
 
-    cpr::Response r = cpr::Put(
+    cpr::PutCallback(callback,
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id },
         cpr::Header{
             { "authorization", "Auth " + auth.access_token },
             { "Content-Type", "application/json" }
         },
-        cpr::Body{ body.dump() }
+        cpr::Body{ body.dump() },
+        cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
-
-    if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
-        HMApi::RefreshUser(auth);
-    }
-
-    if (r.status_code != ResponseCodes::OK) {
-        bool isJson = r.header["Content-Type"] == "application/json";
-        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
-    }
-
-    return Response{ ResponseCodes::OK, "NONE", r.text };
 }
 
 Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
@@ -208,7 +213,8 @@ Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id },
         cpr::Header{
             { "authorization", "Auth " + auth.access_token }
-        }
+        },
+        cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
@@ -233,7 +239,8 @@ Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id },
         cpr::Header{
             { "authorization", "Auth " + auth.access_token }
-        }
+        },
+        cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
@@ -251,33 +258,20 @@ Response HMApi::DeleteSave(const AuthSession & auth, const std::string & id) {
     return Response{ ResponseCodes::OK };
 }
 
-Response HMApi::LockSave(const AuthSession& auth, const std::string& id, const bool status) {
+void HMApi::LockSave(const AuthSession& auth, const std::string& id, const bool status, std::function<void(cpr::Response r)> callback) {
     json body = {
         { "status", status }
     };
 
-    cpr::Response r = cpr::Put(
+    cpr::PutCallback(
+        callback,
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/status/" + id },
-		cpr::Header{
-            { "authorization", "Auth " + auth.access_token },
-            { "Content-Type", "application/json" }
-        },
-        cpr::Body{body.dump()}
+        cpr::Header{ { "authorization", "Auth " + auth.access_token }, { "Content-Type", "application/json" } },
+        cpr::Body{ body.dump() }, cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
-
-    if(r.status_code == ResponseCodes::TOKEN_EXPIRED){
-        HMApi::RefreshUser(auth);
-    }
-
-    if (r.status_code != ResponseCodes::OK) {
-        bool isJson = r.header["Content-Type"] == "application/json";
-        return { (ResponseCodes) r.status_code, isJson ? json::parse(r.text)["error"].get<std::string>() : r.text };
-    }
-
-    return Response{ ResponseCodes::OK };
 }
 
 Response HMApi::GetSaveLock(const AuthSession& auth, const std::string& id) {
@@ -285,7 +279,8 @@ Response HMApi::GetSaveLock(const AuthSession& auth, const std::string& id) {
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/status/" + id },
         cpr::Header{
             { "authorization", "Auth " + auth.access_token }
-        }
+        },
+        cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
@@ -310,7 +305,8 @@ Response HMApi::UnlockAllSaves(const AuthSession& auth) {
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/status/" },
         cpr::Header{
             { "authorization", "Auth " + auth.access_token }
-        }
+        },
+        cpr::Timeout{ MAX_TIMEOUT }
 #ifdef __WIIU__
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
@@ -360,7 +356,7 @@ void from_json(const json& j, CloudSave& save) {
     save.endianess =
         (Endianess)(std::find(i_endianess.begin(), i_endianess.end(), j["endianess"]) - i_endianess.begin());
     LINK(save, blob);
-    LINK(save, md5);
+    LINK(save, hash);
     LINK(save, metadata);
 }
 
