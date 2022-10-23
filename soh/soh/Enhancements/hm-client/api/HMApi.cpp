@@ -194,7 +194,13 @@ void HMApi::UploadSave(const AuthSession& auth, const std::string& name, const s
         { "game_version", game_version },
     };
 
+// Temporal fix for the switch
+
+#ifdef __SWITCH__
+    cpr::Response r = cpr::Put(
+#else
     cpr::PutCallback(callback,
+#endif
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/" + id },
         cpr::Header{
             { "authorization", "Auth " + auth.access_token },
@@ -206,6 +212,10 @@ void HMApi::UploadSave(const AuthSession& auth, const std::string& name, const s
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
+
+#ifdef __SWITCH__
+    callback(r);
+#endif
 }
 
 Response HMApi::LoadSave(const AuthSession & auth, const std::string & id) {
@@ -263,8 +273,13 @@ void HMApi::LockSave(const AuthSession& auth, const std::string& id, const bool 
         { "status", status }
     };
 
-    cpr::PutCallback(
-        callback,
+// Temporal fix for the switch
+
+#ifdef __SWITCH__
+    cpr::Response r = cpr::Put(
+#else
+    cpr::PutCallback(callback,
+#endif
         cpr::Url{ HM_ENDPOINT "/api/v1/saves/status/" + id },
         cpr::Header{ { "authorization", "Auth " + auth.access_token }, { "Content-Type", "application/json" } },
         cpr::Body{ body.dump() }, cpr::Timeout{ MAX_TIMEOUT }
@@ -272,6 +287,9 @@ void HMApi::LockSave(const AuthSession& auth, const std::string& id, const bool 
         ,cpr::SslOptions({.ca_path = Ship::WiiU::GetCAPath()})
 #endif
     );
+#ifdef __SWITCH__
+    callback(r);
+#endif
 }
 
 Response HMApi::GetSaveLock(const AuthSession& auth, const std::string& id) {
